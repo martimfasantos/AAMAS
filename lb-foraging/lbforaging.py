@@ -5,9 +5,13 @@ import time
 import gym
 import numpy as np
 import lbforaging
+import warnings
 
 
 logger = logging.getLogger(__name__)
+logger.propagate = False
+
+warnings.filterwarnings("ignore")
 
 
 def _game_loop(env, render):
@@ -33,8 +37,8 @@ def _game_loop(env, render):
             time.sleep(0.5)
 
         done = np.all(ndone)
-    # print(env.players[0].score, env.players[1].score)
-
+    print(env.players[0].score, env.players[1].score)
+logger = logging.getLogger(__name__)
 
 def main(game_count=1, render=False):
     env = gym.make("Foraging-8x8-2p-2f-v2")
