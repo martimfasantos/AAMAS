@@ -94,8 +94,8 @@ class Viewer(object):
         pyglet.resource.path = [os.path.join(script_dir, "icons")]
         pyglet.resource.reindex()
 
-        self.img_apple = pyglet.resource.image("apple.png")
-        self.img_agent = pyglet.resource.image("agent.png")
+        self.img_apple = pyglet.resource.image("fire.png")
+        self.img_agent = pyglet.resource.image("firetruck.png")
 
     def close(self):
         self.window.close()

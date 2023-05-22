@@ -480,7 +480,7 @@ class ForagingEnv(Env):
         self._gen_valid_moves()
 
         nobs, _, _, _ = self._make_gym_obs()
-        return nobs
+        return nobs,{}
 
     def step(self, actions):
         self.current_step += 1

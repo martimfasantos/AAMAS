@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import logging
 import random
@@ -30,7 +31,7 @@ def _game_loop(env, render):
 
         nobs, nreward, ndone, _ = env.step(actions)
         if sum(nreward) > 0:
-            print(nreward)
+            pass
 
         if render:
             env.render()
