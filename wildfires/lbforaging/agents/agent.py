@@ -65,3 +65,28 @@ class Agent:
 
     def cleanup(self):
         pass
+
+class Helicopter():
+    """
+    Wrapper around an agent.
+    """
+    name = "Helicopter Agent"
+
+    def __init__(self,agent: Agent):
+        self.agent = agent
+
+    def step(self, obs):
+        return self.agent.step(obs)
+    
+class FireTruck(Agent):
+    """
+    Wrapper around an agent.
+    """
+    name = "FireTruck Agent"
+
+    def __init__(self,agent: Agent):
+        self.agent = agent
+
+    def step(self, obs):
+        return self.agent.step(obs)
+       

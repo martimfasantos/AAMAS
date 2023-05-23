@@ -10,6 +10,7 @@ import numpy as np
 import math
 import six
 from gym import error
+from lbforaging.agents import FireTruck,Helicopter
 
 if "Apple" in sys.version:
     if "DYLD_FALLBACK_LIBRARY_PATH" in os.environ:
@@ -96,6 +97,7 @@ class Viewer(object):
 
         self.img_apple = pyglet.resource.image("fire.png")
         self.img_agent = pyglet.resource.image("firetruck.png")
+        self.img_heli = pyglet.resource.image("helicopter.png")
 
     def close(self):
         self.window.close()
@@ -200,7 +202,7 @@ class Viewer(object):
             row, col = player.position
             players.append(
                 pyglet.sprite.Sprite(
-                    self.img_agent,
+                    self.img_agent if isinstance(player.controller,FireTruck) else self.img_heli,
                     (self.grid_size + 1) * col,
                     self.height - (self.grid_size + 1) * (row + 1),
                     batch=batch,

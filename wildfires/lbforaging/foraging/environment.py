@@ -6,7 +6,8 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-
+from lbforaging.agents import RandomAgent,FireTruck,Helicopter
+TILES_PER_FIRE = 4
 
 class Action(Enum):
     NONE = 0
@@ -47,7 +48,7 @@ class Player:
         self.controller = controller
 
     def step(self, obs):
-        return self.controller._step(obs)
+        return self.controller.step(obs)
 
     @property
     def name(self):
@@ -263,16 +264,39 @@ class ForagingEnv(Env):
                 or not self._is_empty_location(row, col)
             ):
                 continue
+            
+            lvl = min_level if min_level == max_level else self.np_random.integers(min_level, max_level)
+            self.field[row, col] = lvl
 
-            self.field[row, col] = (
-                min_level
-                if min_level == max_level
-                # ! this is excluding food of level `max_level` but is kept for
-                # ! consistency with prior LBF versions
-                else self.np_random.integers(min_level, max_level)
-            )
-            food_count += 1
+            
+            food_count += 1 + self._fill_adjacent_tiles(row, col, lvl)
         self._food_spawned = self.field.sum()
+
+    def _fill_adjacent_tiles(self,row,col,level):
+        placed = 0
+        if(row -1 >= 0 and self._is_empty_location(row-1, col)):
+            self.field[row-1, col] = level
+            placed += 1
+        elif(row + 1 < self.rows and self._is_empty_location(row+1, col)):
+            self.field[row+1, col] = level
+            placed += 1
+
+
+        if(col -1 >= 0 and self._is_empty_location(row, col-1)):
+            self.field[row, col-1] = level
+            placed += 1
+        elif(col + 1 < self.cols and self._is_empty_location(row, col+1)):
+            self.field[row, col+1] = level
+            placed += 1
+
+        if(row -1 >= 0 and col -1 >=0 and self._is_empty_location(row-1, col-1)):
+            self.field[row-1, col-1] = level
+            placed += 1
+        elif(row + 1 < self.rows and col + 1 < self.cols and self._is_empty_location(row+1, col+1)):
+            self.field[row+1, col+1] = level
+            placed += 1
+
+        return placed
 
     def _is_empty_location(self, row, col):
         if self.field[row, col] != 0:
@@ -284,6 +308,7 @@ class ForagingEnv(Env):
         return True
 
     def spawn_players(self, max_player_level):
+        trucks = 0
         for player in self.players:
 
             attempts = 0
@@ -300,6 +325,12 @@ class ForagingEnv(Env):
                     )
                     break
                 attempts += 1
+            if(trucks >= len(self.players)//2):
+                player.set_controller(Helicopter(RandomAgent(player)))
+                trucks += 1
+            else:
+                player.set_controller(FireTruck(RandomAgent(player)))
+                trucks += 1
 
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
