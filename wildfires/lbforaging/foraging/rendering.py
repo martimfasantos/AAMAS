@@ -96,8 +96,9 @@ class Viewer(object):
         pyglet.resource.reindex()
 
         self.img_apple = pyglet.resource.image("fire.png")
-        self.img_agent = pyglet.resource.image("firetruck.png")
         self.img_heli = pyglet.resource.image("helicopter.png")
+        self.truckRotations = [pyglet.resource.image(f"firetruck{x}.png") for x in [0,90,180,270]]
+
 
     def close(self):
         self.window.close()
@@ -200,19 +201,24 @@ class Viewer(object):
 
         for player in env.players:
             row, col = player.position
-            players.append(
-                pyglet.sprite.Sprite(
-                    self.img_agent if isinstance(player.controller,FireTruck) else self.img_heli,
+            sprite = pyglet.sprite.Sprite(
+                    self._findCorrectImage(player),
                     (self.grid_size + 1) * col,
                     self.height - (self.grid_size + 1) * (row + 1),
                     batch=batch,
-                )
             )
+            players.append(sprite)
         for p in players:
             p.update(scale=self.grid_size / p.width)
         batch.draw()
         for p in env.players:
-            self._draw_badge(*p.position, p.level)
+            self._draw_badge(*p.position, p.controller.water)
+    
+    def _findCorrectImage(self,player):
+        if(isinstance(player.controller,Helicopter)):
+            return self.img_heli
+        else:
+            return self.truckRotations[player.orietation // 90]
 
     def _draw_badge(self, row, col, level):
         resolution = 6

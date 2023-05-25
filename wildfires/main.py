@@ -9,6 +9,8 @@ from lbforaging.foraging.environment import TILES_PER_FIRE
 import warnings
 from gym.envs.registration import register
 
+SLEEP_TIME = 0.5
+
 
 logger = logging.getLogger(__name__)
 logger.propagate = False
@@ -16,7 +18,7 @@ logger.propagate = False
 warnings.filterwarnings("ignore")
 
 
-def _game_loop(env, render):
+def _game_loop(env, render,debug):
     """
     """
     obs,info = env.reset()
@@ -24,7 +26,7 @@ def _game_loop(env, render):
 
     if render:
         env.render()
-        time.sleep(0.5)
+        time.sleep(SLEEP_TIME)
 
     while not done:
 
@@ -37,12 +39,15 @@ def _game_loop(env, render):
 
         if render:
             env.render()
-            time.sleep(0.5)
+            if(debug):
+                input()
+            else:
+                time.sleep(SLEEP_TIME)
 
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render,fires,agents,size=16,c=False):
+def main(game_count, render,fires,agents,debug,size=16,c=False,):
     register(
     id="Foraging-{0}x{0}-{1}p-{2}f{3}-v2".format(size, agents, TILES_PER_FIRE*fires, "-coop" if c else ""),
     entry_point="lbforaging.foraging:ForagingEnv",
@@ -60,13 +65,14 @@ def main(game_count, render,fires,agents,size=16,c=False):
     obs = env.reset()
 
     for episode in range(game_count):
-        _game_loop(env, render)
+        _game_loop(env, render,debug)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Play the level foraging game.")
 
     parser.add_argument("--render",default=False, action="store_true")
+    parser.add_argument("--debug",default=False, action="store_true")
     parser.add_argument(
         "--times", type=int, default=1, help="How many times to run the game"
     )
@@ -76,5 +82,5 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
-    main(args.times, args.render,args.fires,args.agents)
+    main(args.times, args.render,args.fires,args.agents,args.debug)
 

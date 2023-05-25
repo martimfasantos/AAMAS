@@ -9,13 +9,15 @@ import numpy as np
 from lbforaging.agents import RandomAgent,FireTruck,Helicopter
 TILES_PER_FIRE = 4
 
+
 class Action(Enum):
-    NONE = 0
-    NORTH = 1
+    NORTH = 0
     SOUTH = 2
     WEST = 3
-    EAST = 4
+    NONE = 4
+    EAST = 1
     LOAD = 5
+    TURN = 6
 
 
 class CellEntity(Enum):
@@ -36,6 +38,8 @@ class Player:
         self.reward = 0
         self.history = None
         self.current_step = None
+        self.orietation = 0
+        self.direction = Action.NORTH
 
     def setup(self, position, level, field_size):
         self.history = []
@@ -49,6 +53,13 @@ class Player:
 
     def step(self, obs):
         return self.controller.step(obs)
+    
+    def turn(self,angle=90):
+        self.orietation = (self.orietation + angle) % 360
+        self.direction = Action(self.orietation // 90)
+
+    
+
 
     @property
     def name(self):
@@ -65,7 +76,7 @@ class ForagingEnv(Env):
 
     metadata = {"render.modes": ["human"]}
 
-    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD]
+    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD,Action.TURN]
     Observation = namedtuple(
         "Observation",
         ["field", "actions", "players", "game_over", "sight", "current_step"],
@@ -265,7 +276,9 @@ class ForagingEnv(Env):
             ):
                 continue
             
-            lvl = min_level if min_level == max_level else self.np_random.integers(min_level, max_level)
+            # TODO: Uncomment bellow for varying level fires
+            # lvl = min_level if min_level == max_level else self.np_random.integers(min_level, max_level)
+            lvl = 1
             self.field[row, col] = lvl
 
             
@@ -331,6 +344,9 @@ class ForagingEnv(Env):
             else:
                 player.set_controller(FireTruck(RandomAgent(player)))
                 trucks += 1
+    def _check_direction(self,action, player):
+       return isinstance(player.controller, Helicopter) or \
+    (isinstance(player.controller, FireTruck) and action == player.direction)
 
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
@@ -339,24 +355,26 @@ class ForagingEnv(Env):
             return (
                 player.position[0] > 0
                 and self.field[player.position[0] - 1, player.position[1]] == 0
-            )
+            ) and self._check_direction(action, player)
         elif action == Action.SOUTH:
             return (
                 player.position[0] < self.rows - 1
                 and self.field[player.position[0] + 1, player.position[1]] == 0
-            )
+            ) and self._check_direction(action, player)
         elif action == Action.WEST:
             return (
                 player.position[1] > 0
                 and self.field[player.position[0], player.position[1] - 1] == 0
-            )
+            ) and self._check_direction(action, player)
         elif action == Action.EAST:
             return (
                 player.position[1] < self.cols - 1
                 and self.field[player.position[0], player.position[1] + 1] == 0
-            )
+            ) and self._check_direction(action, player)
         elif action == Action.LOAD:
             return self.adjacent_food(*player.position) > 0
+        elif action == Action.TURN: # only trucks can turn
+            return isinstance(player.controller, FireTruck)
 
         self.logger.error("Undefined action {} from {}".format(action, player.name))
         raise ValueError("Undefined action")
@@ -496,7 +514,7 @@ class ForagingEnv(Env):
             assert self.observation_space[i].contains(obs), \
                 f"obs space error: obs: {obs}, obs_space: {self.observation_space[i]}"
         
-        return nobs, nreward, ndone, ninfo
+        return observations, nreward, ndone, ninfo
 
     def reset(self, **kwargs):
         self.field = np.zeros(self.field_size, np.int32)
@@ -539,6 +557,7 @@ class ForagingEnv(Env):
         # move players
         # if two or more players try to move to the same location they all fail
         collisions = defaultdict(list)
+        turning =  []
 
         # so check for collisions
         for player, action in zip(self.players, actions):
@@ -555,9 +574,15 @@ class ForagingEnv(Env):
             elif action == Action.LOAD:
                 collisions[player.position].append(player)
                 loading_players.add(player)
+            elif action == Action.TURN:
+                turning.append(player)
+
+        # process turning
+
+        for player in turning:
+            player.turn()
 
         # and do movements for non colliding players
-
         for k, v in collisions.items():
             if len(v) > 1:  # make sure no more than an player will arrive at location
                 continue
@@ -588,6 +613,7 @@ class ForagingEnv(Env):
             # else the food was loaded and each player scores points
             for a in adj_players:
                 a.reward = float(a.level * food)
+                a.controller.water -= 1
                 if self._normalize_reward:
                     a.reward = a.reward / float(
                         adj_player_level * self._food_spawned

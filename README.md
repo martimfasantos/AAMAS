@@ -36,6 +36,7 @@ python wildfires/main.py
 ```
 
 ***Note:*** If you want a graphical interface, you should run the project with the --render flag.
+***Note:*** If you want to run it step by step (by pressing enter), you should run the project with the --debug flag.
 
 ## Credits
 

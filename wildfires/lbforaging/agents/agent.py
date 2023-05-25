@@ -74,11 +74,13 @@ class Helicopter():
 
     def __init__(self,agent: Agent):
         self.agent = agent
+        self.water = 200
 
     def step(self, obs):
-        return self.agent.step(obs)
+        return self.agent._step(obs)
     
-class FireTruck(Agent):
+    
+class FireTruck():
     """
     Wrapper around an agent.
     """
@@ -86,7 +88,10 @@ class FireTruck(Agent):
 
     def __init__(self,agent: Agent):
         self.agent = agent
+        self.water = 500
 
     def step(self, obs):
-        return self.agent.step(obs)
+        return self.agent._step(obs)
+    
+   
        
