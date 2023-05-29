@@ -319,30 +319,43 @@ class ForagingEnv(Env):
 
         return True
 
-    def spawn_players(self, max_player_level):
-        trucks = 0
+    def spawn_players(self, max_player_level,team):
+        assert 'Helicopters' in team and 'Firetrucks' in team, \
+            'Team must have a Helicopters and a FireTrucks definition'
+        assert len(team['Firetrucks']) + len(team['Helicopters']) == len(self.players), \
+            'Team must have the same number of FireTrucks and Helicopters as there are players'
+        fireTrucks = iter(team['Firetrucks'])
+        helicopters = iter(team['Helicopters'])
+        i = 0
         for player in self.players:
 
             attempts = 0
             player.reward = 0
 
             while attempts < 1000:
-                row = self.np_random.integers(0, self.rows)
-                col = self.np_random.integers(0, self.cols)
+                # row = self.np_random.integers(0, self.rows)
+                # col = self.np_random.integers(0, self.cols)
+                row,col = 0,i
                 if self._is_empty_location(row, col):
                     player.setup(
                         (row, col),
                         self.np_random.integers(1, max_player_level + 1),
                         self.field_size,
                     )
+                    agent = next(fireTrucks, None)
+                    if(agent is not None):
+                        player.set_controller(Helicopter(agent(player)))
+                    else:
+                        agent = next(helicopters, None)
+                        player.set_controller(FireTruck(agent(player)))
+                    i += 1
                     break
                 attempts += 1
-            if(trucks >= len(self.players)//2):
-                player.set_controller(Helicopter(RandomAgent(player)))
-                trucks += 1
-            else:
-                player.set_controller(FireTruck(RandomAgent(player)))
-                trucks += 1
+
+            
+    
+
+
     def _check_direction(self,action, player):
        return isinstance(player.controller, Helicopter) or \
     (isinstance(player.controller, FireTruck) and action == player.direction)
@@ -354,22 +367,25 @@ class ForagingEnv(Env):
             return (
                 player.position[0] > 0
                 and self.field[player.position[0] - 1, player.position[1]] == 0
-            ) and self._check_direction(action, player)
+            ) and self._check_direction(action, player) and \
+                self._is_empty_location(player.position[0] - 1, player.position[1])
         elif action == Action.SOUTH:
             return (
                 player.position[0] < self.rows - 1
                 and self.field[player.position[0] + 1, player.position[1]] == 0
-            ) and self._check_direction(action, player)
+            ) and self._check_direction(action, player) and self._is_empty_location(player.position[0] + 1, player.position[1])
         elif action == Action.WEST:
             return (
                 player.position[1] > 0
                 and self.field[player.position[0], player.position[1] - 1] == 0
-            ) and self._check_direction(action, player)
+            ) and self._check_direction(action, player) and\
+                  self._is_empty_location(player.position[0], player.position[1] - 1)
         elif action == Action.EAST:
             return (
                 player.position[1] < self.cols - 1
                 and self.field[player.position[0], player.position[1] + 1] == 0
-            ) and self._check_direction(action, player)
+            ) and self._check_direction(action, player) and\
+                    self._is_empty_location(player.position[0], player.position[1] + 1)
         elif action == Action.LOAD:
             return self.adjacent_food(*player.position) > 0
         elif action == Action.TURN_RIGHT or \
@@ -519,7 +535,7 @@ class ForagingEnv(Env):
 
     def reset(self, **kwargs):
         self.field = np.zeros(self.field_size, np.int32)
-        self.spawn_players(self.max_player_level)
+        self.spawn_players(self.max_player_level,kwargs['team'])
         player_levels = sorted([player.level for player in self.players])
 
         self.spawn_food(

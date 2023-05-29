@@ -6,6 +6,7 @@ import time
 import gym
 import numpy as np
 from lbforaging.foraging.environment import TILES_PER_FIRE
+from lbforaging.agents import *
 import warnings
 from gym.envs.registration import register
 
@@ -17,21 +18,45 @@ logger.propagate = False
 
 warnings.filterwarnings("ignore")
 
+def generateTeams():
+    """
+    Generates a dictionary of teams and their agents
+    """
+    return {
+        "Random Agents": {
+            "Helicopters": [RandomAgent, 
+                           ],
+            "Firetrucks": [RandomAgent,
+                          ]
+        }
 
-def _game_loop(env, render,debug):
+    }
+   
+    
+
+def _game_loop(env, render,debug,team):
     """
     """
-    obs,info = env.reset()
+    obs,_ = env.reset(team=team)
     done = False
 
     if render:
+        
+        
         env.render()
-        time.sleep(SLEEP_TIME)
+        if(debug):
+            input()
+        else:
+            time.sleep(SLEEP_TIME)
 
     while not done:
 
         
         actions = [player.step(obs[i]) for i,player in enumerate(env.players)]
+
+        # print the choosen actions
+        for i,player in enumerate(env.players):
+            print(f"{player.name} chose action: {actions[i]}")
         
         obs, nreward, ndone, _ = env.step(actions)
         if sum(nreward) > 0:
@@ -47,25 +72,30 @@ def _game_loop(env, render,debug):
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render, fires, agents, debug, size=16,c=False,):
-    register(
-    id="Foraging-{0}x{0}-{1}p-{2}f{3}-v2".format(size, agents, TILES_PER_FIRE*fires, "-coop" if c else ""),
-    entry_point="lbforaging.foraging:ForagingEnv",
-    kwargs={
-        "players": agents,
-        "max_player_level": 3,
-        "field_size": (size, size),
-        "max_food": TILES_PER_FIRE*fires,
-        "sight": size,
-        "max_episode_steps": 50,
-        "force_coop": c,
-    },
-)
-    env = gym.make(f"Foraging-16x16-{agents}p-{TILES_PER_FIRE*fires}f-v2")
-    obs = env.reset()
+def main(game_count, render, fires, debug, size=16,c=False,):
+    teams = generateTeams()
 
-    for episode in range(game_count):
-        _game_loop(env, render,debug)
+    for name,team in teams.items():
+        print(f"Running with team: {name}")
+        # compute the size of the team
+        agents = sum([len(team[vehicle]) for vehicle in team])
+        register(
+        id="Foraging-{0}x{0}-{1}p-{2}f{3}-v2".format(size, agents, TILES_PER_FIRE*fires, "-coop" if c else ""),
+        entry_point="lbforaging.foraging:ForagingEnv",
+        kwargs={
+            "players": agents,
+            "max_player_level": 3,
+            "field_size": (size, size),
+            "max_food": TILES_PER_FIRE*fires,
+            "sight": size,
+            "max_episode_steps": 50,
+            "force_coop": c,
+        },
+        )
+        env = gym.make(f"Foraging-{size}x{size}-{agents}p-{TILES_PER_FIRE*fires}f-v2")
+
+        for episode in range(game_count):
+            _game_loop(env, render,debug,team)
 
 
 if __name__ == "__main__":
@@ -78,9 +108,8 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
-    parser.add_argument("--agents", type=int, default=2, help="How many agents to run with")
 
 
     args = parser.parse_args()
-    main(args.times, args.render,args.fires,args.agents,args.debug)
+    main(args.times, args.render,args.fires,args.debug)
 
