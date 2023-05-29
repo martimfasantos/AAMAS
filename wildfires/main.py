@@ -27,15 +27,15 @@ def generateTeams(mode,nagents):
     if(mode == 0):
         return {
             "Random Agents": {
-                "Helicopters": [RandomAgent for _ in range(nagents)],
-                "Firetrucks": [RandomAgent for _ in range(nagents)]
+                "Helicopters": [RandomAgent for _ in range(nagents // 2)],
+                "Firetrucks": [RandomAgent for _ in range(nagents // 2)]
             }
         }
     elif(mode == 1):
         return {
             "PseudoRandom Agents": {
-                "Helicopters": [PseudoRandomAgent for _ in range(nagents)],
-                "Firetrucks": [PseudoRandomAgent for _ in range(nagents)]
+                "Helicopters": [PseudoRandomAgent for _ in range(nagents // 2)],
+                "Firetrucks": [PseudoRandomAgent for _ in range(nagents // 2)]
             }
         }
     else:
