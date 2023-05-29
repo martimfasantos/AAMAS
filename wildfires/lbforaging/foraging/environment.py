@@ -6,9 +6,16 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-from lbforaging.agents import RandomAgent,FireTruck,Helicopter
+from lbforaging.agents.agent import FireTruck, Helicopter
+from lbforaging.agents.random_agent import RandomAgent
+from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
+# TODO implement more agents
+
 TILES_PER_FIRE = 4
 
+class AgentType(Enum):
+    RANDOM = 0
+    PSEUDO_RANDOM = 1
 
 class Action(Enum):
     NORTH = 0
@@ -88,6 +95,7 @@ class ForagingEnv(Env):
         self,
         players,
         max_player_level,
+        players_mode,
         field_size,
         max_food,
         sight,
@@ -100,6 +108,7 @@ class ForagingEnv(Env):
         self.logger = logging.getLogger(__name__)
         self.seed()
         self.players = [Player() for _ in range(players)]
+        self.players_mode = players_mode
 
         self.field = np.zeros(field_size, np.int32)
 
@@ -319,7 +328,16 @@ class ForagingEnv(Env):
 
         return True
 
-    def spawn_players(self, max_player_level):
+    def spawn_players(self, max_player_level, player_mode):
+
+        if (player_mode == 0):
+            AgentType = RandomAgent
+        elif (player_mode == 1):
+            AgentType = PseudoRandomAgent
+        # TODO implement other agents
+        else:
+            AgentType = RandomAgent
+            
         trucks = 0
         for player in self.players:
 
@@ -338,14 +356,15 @@ class ForagingEnv(Env):
                     break
                 attempts += 1
             if(trucks >= len(self.players)//2):
-                player.set_controller(Helicopter(RandomAgent(player)))
+                player.set_controller(Helicopter(AgentType(player)))
                 trucks += 1
             else:
-                player.set_controller(FireTruck(RandomAgent(player)))
+                player.set_controller(FireTruck(AgentType(player)))
                 trucks += 1
-    def _check_direction(self,action, player):
+    
+    def _check_direction(self, action, player):
        return isinstance(player.controller, Helicopter) or \
-    (isinstance(player.controller, FireTruck) and action == player.direction)
+                (isinstance(player.controller, FireTruck) and action == player.direction)
 
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
@@ -519,7 +538,7 @@ class ForagingEnv(Env):
 
     def reset(self, **kwargs):
         self.field = np.zeros(self.field_size, np.int32)
-        self.spawn_players(self.max_player_level)
+        self.spawn_players(self.max_player_level, self.players_mode)
         player_levels = sorted([player.level for player in self.players])
 
         self.spawn_food(
@@ -530,7 +549,7 @@ class ForagingEnv(Env):
         self._gen_valid_moves()
 
         nobs, _, _, _ = self._make_gym_obs()
-        return nobs,{}
+        return nobs, {}
 
     def step(self, actions):
         self.current_step += 1
@@ -554,13 +573,13 @@ class ForagingEnv(Env):
                 actions[i] = Action.NONE
 
         loading_players = set()
+        turning_right_players = set()
+        turning_left_players = set()
+        turning_around_players = set()
 
         # move players
         # if two or more players try to move to the same location they all fail
         collisions = defaultdict(list)
-        turning_left = []
-        turning_right = []
-        turning_around = []
 
         # so check for collisions
         for player, action in zip(self.players, actions):
@@ -578,25 +597,28 @@ class ForagingEnv(Env):
                 collisions[player.position].append(player)
                 loading_players.add(player)
             elif action == Action.TURN_RIGHT:
-                turning_right.append(player)
+                collisions[player.position].append(player)
+                turning_right_players.add(player)
             elif action == Action.TURN_LEFT:
-                turning_left.append(player)
+                collisions[player.position].append(player)
+                turning_left_players.add(player)
             elif action == Action.TURN_AROUND:
-                turning_around.append(player)
-
-        # process turnings
-        for player in turning_right:
-            player.turn(90)
-        for player in turning_left:
-            player.turn(-90)
-        for player in turning_around:
-            player.turn(180)
+                collisions[player.position].append(player)
+                turning_around_players.add(player)
+ 
 
         # and do movements for non colliding players
-        for k, v in collisions.items():
-            if len(v) > 1:  # make sure no more than an player will arrive at location
+        for pos, players in collisions.items():
+            if len(players) > 1:  # make sure no more than an player will arrive at location
                 continue
-            v[0].position = k
+            players[0].position = pos
+            # process turnings
+            if players[0] in turning_right_players:
+                players[0].turn(90)
+            elif players[0] in turning_left_players:
+                players[0].turn(-90)
+            elif players[0] in turning_around_players:
+                players[0].turn(180)
 
         # finally process the loadings:
         while loading_players:
