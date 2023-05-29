@@ -12,12 +12,14 @@ TILES_PER_FIRE = 4
 
 class Action(Enum):
     NORTH = 0
+    EAST = 1
     SOUTH = 2
     WEST = 3
     NONE = 4
-    EAST = 1
     LOAD = 5
-    TURN = 6
+    TURN_LEFT = 6
+    TURN_RIGHT = 7
+    TURN_AROUND = 8
 
 
 class CellEntity(Enum):
@@ -54,12 +56,9 @@ class Player:
     def step(self, obs):
         return self.controller.step(obs)
     
-    def turn(self,angle=90):
+    def turn(self,angle):
         self.orietation = (self.orietation + angle) % 360
         self.direction = Action(self.orietation // 90)
-
-    
-
 
     @property
     def name(self):
@@ -76,7 +75,7 @@ class ForagingEnv(Env):
 
     metadata = {"render.modes": ["human"]}
 
-    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD,Action.TURN]
+    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND]
     Observation = namedtuple(
         "Observation",
         ["field", "actions", "players", "game_over", "sight", "current_step"],
@@ -373,7 +372,9 @@ class ForagingEnv(Env):
             ) and self._check_direction(action, player)
         elif action == Action.LOAD:
             return self.adjacent_food(*player.position) > 0
-        elif action == Action.TURN: # only trucks can turn
+        elif action == Action.TURN_RIGHT or \
+             action == Action.TURN_LEFT or \
+             action == Action.TURN_AROUND: # only trucks can turn
             return isinstance(player.controller, FireTruck)
 
         self.logger.error("Undefined action {} from {}".format(action, player.name))
@@ -557,7 +558,9 @@ class ForagingEnv(Env):
         # move players
         # if two or more players try to move to the same location they all fail
         collisions = defaultdict(list)
-        turning =  []
+        turning_left = []
+        turning_right = []
+        turning_around = []
 
         # so check for collisions
         for player, action in zip(self.players, actions):
@@ -574,13 +577,20 @@ class ForagingEnv(Env):
             elif action == Action.LOAD:
                 collisions[player.position].append(player)
                 loading_players.add(player)
-            elif action == Action.TURN:
-                turning.append(player)
+            elif action == Action.TURN_RIGHT:
+                turning_right.append(player)
+            elif action == Action.TURN_LEFT:
+                turning_left.append(player)
+            elif action == Action.TURN_AROUND:
+                turning_around.append(player)
 
-        # process turning
-
-        for player in turning:
-            player.turn()
+        # process turnings
+        for player in turning_right:
+            player.turn(90)
+        for player in turning_left:
+            player.turn(-90)
+        for player in turning_around:
+            player.turn(180)
 
         # and do movements for non colliding players
         for k, v in collisions.items():

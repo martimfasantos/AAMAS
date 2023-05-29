@@ -47,7 +47,7 @@ def _game_loop(env, render,debug):
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render,fires,agents,debug,size=16,c=False,):
+def main(game_count, render, fires, agents, debug, size=16,c=False,):
     register(
     id="Foraging-{0}x{0}-{1}p-{2}f{3}-v2".format(size, agents, TILES_PER_FIRE*fires, "-coop" if c else ""),
     entry_point="lbforaging.foraging:ForagingEnv",
