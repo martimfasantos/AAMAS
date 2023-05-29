@@ -6,7 +6,7 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-from lbforaging.agents import RandomAgent,FireTruck,Helicopter
+from .vehicle import FireTruck,Helicopter
 TILES_PER_FIRE = 4
 
 
@@ -326,16 +326,14 @@ class ForagingEnv(Env):
             'Team must have the same number of FireTrucks and Helicopters as there are players'
         fireTrucks = iter(team['Firetrucks'])
         helicopters = iter(team['Helicopters'])
-        i = 0
         for player in self.players:
 
             attempts = 0
             player.reward = 0
 
             while attempts < 1000:
-                # row = self.np_random.integers(0, self.rows)
-                # col = self.np_random.integers(0, self.cols)
-                row,col = 0,i
+                row = self.np_random.integers(0, self.rows)
+                col = self.np_random.integers(0, self.cols)
                 if self._is_empty_location(row, col):
                     player.setup(
                         (row, col),
@@ -348,7 +346,6 @@ class ForagingEnv(Env):
                     else:
                         agent = next(helicopters, None)
                         player.set_controller(FireTruck(agent(player)))
-                    i += 1
                     break
                 attempts += 1
 
@@ -618,7 +615,10 @@ class ForagingEnv(Env):
         while loading_players:
             # find adjacent food
             player = loading_players.pop()
-            frow, fcol = self.adjacent_food_location(*player.position)
+            res = self.adjacent_food_location(*player.position)
+            if(res is None):
+                continue
+            frow, fcol = res
             food = self.field[frow, fcol]
 
             adj_players = self.adjacent_players(frow, fcol)

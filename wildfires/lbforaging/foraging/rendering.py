@@ -10,7 +10,7 @@ import numpy as np
 import math
 import six
 from gym import error
-from lbforaging.agents import FireTruck,Helicopter
+from .vehicle import FireTruck,Helicopter
 
 if "Apple" in sys.version:
     if "DYLD_FALLBACK_LIBRARY_PATH" in os.environ:
@@ -217,7 +217,7 @@ class Viewer(object):
     def _findCorrectImage(self,player):
         if(isinstance(player.controller,Helicopter)):
             return self.img_heli
-        else:
+        elif(isinstance(player.controller,FireTruck)):
             return self.truckRotations[player.orietation // 90]
 
     def _draw_badge(self, row, col, level):

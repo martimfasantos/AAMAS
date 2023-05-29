@@ -1,7 +1,8 @@
 import random
 import numpy as np
-from foraging import Agent
-from foraging.environment import Action
+from . import Agent
+from ..foraging.environment import Action
+from ..foraging import FireTruck
 
 
 class HeuristicAgent(Agent):
@@ -10,22 +11,40 @@ class HeuristicAgent(Agent):
     def _center_of_players(self, players):
         coords = np.array([player.position for player in players])
         return np.rint(coords.mean(axis=0))
+    def _compute_turn(self,direction,targetedDirection):
+        turns = [Action.NONE,Action.TURN_RIGHT,Action.TURN_AROUND,Action.TURN_LEFT]
+        return turns[(targetedDirection.value - direction.value) % 4]
 
     def _move_towards(self, target, allowed):
 
         y, x = self.observed_position
         r, c = target
-
-        if r < y and Action.NORTH in allowed:
-            return Action.NORTH
-        elif r > y and Action.SOUTH in allowed:
-            return Action.SOUTH
-        elif c > x and Action.EAST in allowed:
+        
+        if r < y:
+            if Action.NORTH in allowed:
+                return Action.NORTH
+            elif(isinstance(self.controller,FireTruck)):
+                return self._compute_turn(self.direction,Action.NORTH)
+        if r > y:
+            if Action.SOUTH in allowed:
+                return Action.SOUTH
+            elif(isinstance(self.controller,FireTruck)):
+                return self._compute_turn(self.direction,Action.SOUTH)
+        if c > x :
+            if(Action.EAST in allowed):
+                return Action.EAST
+            elif(isinstance(self.controller,FireTruck)):
+                return self._compute_turn(self.direction,Action.EAST)
             return Action.EAST
-        elif c < x and Action.WEST in allowed:
+        if c < x:
+            if(Action.WEST in allowed):
+                return Action.WEST
+            elif(isinstance(self.controller,FireTruck)):
+                return self._compute_turn(self.direction,Action.WEST)
             return Action.WEST
-        else:
-            raise ValueError("No simple path found")
+        
+        # if we reach here, no action is possible to move towards target (choose one randomly)
+        raise ValueError("No simple path found")
 
     def step(self, obs):
         raise NotImplemented("Heuristic agent is implemented by H1-H4")

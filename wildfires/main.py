@@ -28,6 +28,12 @@ def generateTeams():
                            ],
             "Firetrucks": [RandomAgent,
                           ]
+        },
+        "Heuristic Agents": {
+            "Helicopters": [H1,
+                            ],
+            "Firetrucks": [H1,
+                            ]
         }
 
     }
@@ -53,10 +59,6 @@ def _game_loop(env, render,debug,team):
 
         
         actions = [player.step(obs[i]) for i,player in enumerate(env.players)]
-
-        # print the choosen actions
-        for i,player in enumerate(env.players):
-            print(f"{player.name} chose action: {actions[i]}")
         
         obs, nreward, ndone, _ = env.step(actions)
         if sum(nreward) > 0:
@@ -72,7 +74,7 @@ def _game_loop(env, render,debug,team):
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render, fires, debug, size=16,c=False,):
+def main(game_count, render, fires, debug, max_steps,size=16,c=False):
     teams = generateTeams()
 
     for name,team in teams.items():
@@ -88,7 +90,7 @@ def main(game_count, render, fires, debug, size=16,c=False,):
             "field_size": (size, size),
             "max_food": TILES_PER_FIRE*fires,
             "sight": size,
-            "max_episode_steps": 50,
+            "max_episode_steps": max_steps,
             "force_coop": c,
         },
         )
@@ -96,6 +98,7 @@ def main(game_count, render, fires, debug, size=16,c=False,):
 
         for episode in range(game_count):
             _game_loop(env, render,debug,team)
+            print(f"Episode {episode+1} of {game_count} finished with {env.current_step} steps.")
 
 
 if __name__ == "__main__":
@@ -107,9 +110,12 @@ if __name__ == "__main__":
         "--times", type=int, default=1, help="How many times to run the game"
     )
 
+    parser.add_argument(
+        "--max_steps", type=int, default=100, help="How many steps in each episode"
+    )
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
 
 
     args = parser.parse_args()
-    main(args.times, args.render,args.fires,args.debug)
+    main(args.times, args.render,args.fires,args.debug,args.max_steps)
 
