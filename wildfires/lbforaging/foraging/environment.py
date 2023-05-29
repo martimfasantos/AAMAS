@@ -9,6 +9,9 @@ import numpy as np
 from .vehicle import FireTruck,Helicopter
 TILES_PER_FIRE = 4
 
+class AgentType(Enum):
+    RANDOM = 0
+    PSEUDO_RANDOM = 1
 
 class Action(Enum):
     NORTH = 0
@@ -350,12 +353,10 @@ class ForagingEnv(Env):
                 attempts += 1
 
             
-    
-
 
     def _check_direction(self,action, player):
        return isinstance(player.controller, Helicopter) or \
-    (isinstance(player.controller, FireTruck) and action == player.direction)
+                (isinstance(player.controller, FireTruck) and action == player.direction)
 
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
@@ -543,7 +544,7 @@ class ForagingEnv(Env):
         self._gen_valid_moves()
 
         nobs, _, _, _ = self._make_gym_obs()
-        return nobs,{}
+        return nobs, {}
 
     def step(self, actions):
         self.current_step += 1
@@ -567,13 +568,13 @@ class ForagingEnv(Env):
                 actions[i] = Action.NONE
 
         loading_players = set()
+        turning_right_players = set()
+        turning_left_players = set()
+        turning_around_players = set()
 
         # move players
         # if two or more players try to move to the same location they all fail
         collisions = defaultdict(list)
-        turning_left = []
-        turning_right = []
-        turning_around = []
 
         # so check for collisions
         for player, action in zip(self.players, actions):
@@ -591,25 +592,28 @@ class ForagingEnv(Env):
                 collisions[player.position].append(player)
                 loading_players.add(player)
             elif action == Action.TURN_RIGHT:
-                turning_right.append(player)
+                collisions[player.position].append(player)
+                turning_right_players.add(player)
             elif action == Action.TURN_LEFT:
-                turning_left.append(player)
+                collisions[player.position].append(player)
+                turning_left_players.add(player)
             elif action == Action.TURN_AROUND:
-                turning_around.append(player)
-
-        # process turnings
-        for player in turning_right:
-            player.turn(90)
-        for player in turning_left:
-            player.turn(-90)
-        for player in turning_around:
-            player.turn(180)
+                collisions[player.position].append(player)
+                turning_around_players.add(player)
+ 
 
         # and do movements for non colliding players
-        for k, v in collisions.items():
-            if len(v) > 1:  # make sure no more than an player will arrive at location
+        for pos, players in collisions.items():
+            if len(players) > 1:  # make sure no more than an player will arrive at location
                 continue
-            v[0].position = k
+            players[0].position = pos
+            # process turnings
+            if players[0] in turning_right_players:
+                players[0].turn(90)
+            elif players[0] in turning_left_players:
+                players[0].turn(-90)
+            elif players[0] in turning_around_players:
+                players[0].turn(180)
 
         # finally process the loadings:
         while loading_players:

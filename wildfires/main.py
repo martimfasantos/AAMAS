@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import logging
-import random
 import time
 import gym
 import numpy as np
@@ -13,30 +12,48 @@ from gym.envs.registration import register
 SLEEP_TIME = 0.5
 
 
+
+
 logger = logging.getLogger(__name__)
 logger.propagate = False
 
 warnings.filterwarnings("ignore")
 
-def generateTeams():
+def generateTeams(mode,nagents):
     """
     Generates a dictionary of teams and their agents
     """
-    return {
-        "Random Agents": {
-            "Helicopters": [RandomAgent, 
-                           ],
-            "Firetrucks": [RandomAgent,
-                          ]
-        },
-        "Heuristic Agents": {
-            "Helicopters": [H1,
-                            ],
-            "Firetrucks": [H1,
-                            ]
-        }
 
-    }
+    if(mode == 0):
+        return {
+            "Random Agents": {
+                "Helicopters": [RandomAgent for _ in range(nagents)],
+                "Firetrucks": [RandomAgent for _ in range(nagents)]
+            }
+        }
+    elif(mode == 1):
+        return {
+            "PseudoRandom Agents": {
+                "Helicopters": [PseudoRandomAgent for _ in range(nagents)],
+                "Firetrucks": [PseudoRandomAgent for _ in range(nagents)]
+            }
+        }
+    else:
+        return {
+            "Random Agents": {
+                "Helicopters": [RandomAgent, 
+                            ],
+                "Firetrucks": [RandomAgent,
+                            ]
+            },
+            "Heuristic Agents": {
+                "Helicopters": [H1,
+                                ],
+                "Firetrucks": [H1,
+                                ]
+            }
+
+        }
    
     
 
@@ -57,8 +74,7 @@ def _game_loop(env, render,debug,team):
 
     while not done:
 
-        
-        actions = [player.step(obs[i]) for i,player in enumerate(env.players)]
+        actions = [player.step(obs[i]) for i, player in enumerate(env.players)]
         
         obs, nreward, ndone, _ = env.step(actions)
         if sum(nreward) > 0:
@@ -74,8 +90,8 @@ def _game_loop(env, render,debug,team):
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render, fires, debug, max_steps,size=16,c=False):
-    teams = generateTeams()
+def main(game_count, render, fires,nagents,mode,debug, max_steps,size=16,c=False):
+    teams = generateTeams(mode,nagents)
 
     for name,team in teams.items():
         print(f"Running with team: {name}")
@@ -115,7 +131,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
 
+    parser.add_argument("--agents", type=int, default=2, help="How many agents to run with")
+    parser.add_argument("--mode", type=int, default=0, help="How should agents behave (0 - Randomly, 1 - Pseudo-randomly , 2- Self defined teams)")
 
     args = parser.parse_args()
-    main(args.times, args.render,args.fires,args.debug,args.max_steps)
+    main(args.times, args.render, args.fires, args.agents, args.mode, args.debug,args.max_steps)
 
