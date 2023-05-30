@@ -6,12 +6,14 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-from .vehicle import FireTruck,Helicopter
+from .vehicle import FireTruck, Helicopter
+
 TILES_PER_FIRE = 4
 
-class AgentType(Enum):
-    RANDOM = 0
-    PSEUDO_RANDOM = 1
+MAX_FIRE_LEVEL = 7
+MAX_WATER_DEPOSIT_SIZE = 500
+MAX_PLAYER_LEVEL = MAX_WATER_DEPOSIT_SIZE // 100
+
 
 class Action(Enum):
     NORTH = 0
@@ -19,7 +21,7 @@ class Action(Enum):
     SOUTH = 2
     WEST = 3
     NONE = 4
-    LOAD = 5
+    EXTINGUISH = 5
     TURN_LEFT = 6
     TURN_RIGHT = 7
     TURN_AROUND = 8
@@ -29,7 +31,7 @@ class CellEntity(Enum):
     # entity encodings for grid observations
     OUT_OF_BOUNDS = 0
     EMPTY = 1
-    FOOD = 2
+    FIRE = 2
     AGENT = 3
 
 
@@ -78,7 +80,7 @@ class ForagingEnv(Env):
 
     metadata = {"render.modes": ["human"]}
 
-    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND]
+    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.EXTINGUISH, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND]
     Observation = namedtuple(
         "Observation",
         ["field", "actions", "players", "game_over", "sight", "current_step"],
@@ -90,9 +92,8 @@ class ForagingEnv(Env):
     def __init__(
         self,
         players,
-        max_player_level,
         field_size,
-        max_food,
+        max_fires,
         sight,
         max_episode_steps,
         force_coop,
@@ -108,9 +109,9 @@ class ForagingEnv(Env):
 
         self.penalty = penalty
         
-        self.max_food = max_food
-        self._food_spawned = 0.0
-        self.max_player_level = max_player_level
+        self.max_fires = max_fires
+        self._fires_spawned = 0.0
+        self.max_player_level = MAX_PLAYER_LEVEL
         self.sight = sight
         self.force_coop = force_coop
         self._game_over = None
@@ -143,11 +144,11 @@ class ForagingEnv(Env):
             field_y = self.field.shape[0]
             # field_size = field_x * field_y
 
-            max_food = self.max_food
-            max_food_level = self.max_player_level * len(self.players)
+            max_fires = self.max_fires
+            max_fires_level = TILES_PER_FIRE * self.max_player_level * len(self.players)
 
-            min_obs = [-1, -1, 0] * max_food + [-1, -1, 0] * len(self.players)
-            max_obs = [field_x-1, field_y-1, max_food_level] * max_food + [
+            min_obs = [-1, -1, 0] * max_fires + [-1, -1, 0] * len(self.players)
+            max_obs = [field_x-1, field_y-1, max_fires_level] * max_fires + [
                 field_x-1,
                 field_y-1,
                 self.max_player_level,
@@ -161,17 +162,17 @@ class ForagingEnv(Env):
             agents_max = np.ones(grid_shape, dtype=np.float32) * self.max_player_level
 
             # foods layer: foods level
-            max_food_level = self.max_player_level * len(self.players)
-            foods_min = np.zeros(grid_shape, dtype=np.float32)
-            foods_max = np.ones(grid_shape, dtype=np.float32) * max_food_level
+            max_fires_level = self.max_player_level * len(self.players)
+            fires_min = np.zeros(grid_shape, dtype=np.float32)
+            fires_max = np.ones(grid_shape, dtype=np.float32) * max_fires_level
 
             # access layer: i the cell available
             access_min = np.zeros(grid_shape, dtype=np.float32)
             access_max = np.ones(grid_shape, dtype=np.float32)
 
             # total layer
-            min_obs = np.stack([agents_min, foods_min, access_min])
-            max_obs = np.stack([agents_max, foods_max, access_max])
+            min_obs = np.stack([agents_min, fires_min, access_min])
+            max_obs = np.stack([agents_max, fires_max, access_max])
 
         return gym.spaces.Box(np.array(min_obs), np.array(max_obs), dtype=np.float32)
 
@@ -232,7 +233,7 @@ class ForagingEnv(Env):
             ].sum()
         )
 
-    def adjacent_food(self, row, col):
+    def adjacent_fire(self, row, col):
         return (
             self.field[max(row - 1, 0), col]
             + self.field[min(row + 1, self.rows - 1), col]
@@ -240,7 +241,7 @@ class ForagingEnv(Env):
             + self.field[row, min(col + 1, self.cols - 1)]
         )
 
-    def adjacent_food_location(self, row, col):
+    def adjacent_fire_location(self, row, col):
         if row > 1 and self.field[row - 1, col] > 0:
             return row - 1, col
         elif row < self.rows - 1 and self.field[row + 1, col] > 0:
@@ -260,12 +261,12 @@ class ForagingEnv(Env):
             and player.position[0] == row
         ]
 
-    def spawn_food(self, max_food, max_level):
-        food_count = 0
+    def spawn_fires(self, max_fires, max_level):
+        fire_count = 0
         attempts = 0
         min_level = max_level if self.force_coop else 1
 
-        while food_count < max_food and attempts < 1000:
+        while fire_count < max_fires and attempts < 1000:
             attempts += 1
             row = self.np_random.integers(1, self.rows - 1)
             col = self.np_random.integers(1, self.cols - 1)
@@ -278,37 +279,33 @@ class ForagingEnv(Env):
             ):
                 continue
             
-            # TODO: Uncomment bellow for varying level fires
-            # lvl = min_level if min_level == max_level else self.np_random.integers(min_level, max_level)
-            lvl = 1
-            self.field[row, col] = lvl
+            fire_level = max_level if self.force_coop else self.np_random.integers(min_level, max_level)
+            self.field[row, col] = fire_level
 
-            
-            food_count += 1 + self._fill_adjacent_tiles(row, col, lvl)
-        self._food_spawned = self.field.sum()
+            fire_count += 1 + self._fill_adjacent_tiles(row, col, fire_level)
+        self._fires_spawned = self.field.sum()
 
-    def _fill_adjacent_tiles(self,row,col,level):
+    def _fill_adjacent_tiles(self, row, col, level):
         placed = 0
-        if(row -1 >= 0 and self._is_empty_location(row-1, col)):
-            self.field[row-1, col] = level
+        if (row - 1 >= 0 and self._is_empty_location(row-1, col)):
+            self.field[row-1, col] = np.random.randint(1, level+1)
             placed += 1
-        elif(row + 1 < self.rows and self._is_empty_location(row+1, col)):
-            self.field[row+1, col] = level
-            placed += 1
-
-
-        if(col -1 >= 0 and self._is_empty_location(row, col-1)):
-            self.field[row, col-1] = level
-            placed += 1
-        elif(col + 1 < self.cols and self._is_empty_location(row, col+1)):
-            self.field[row, col+1] = level
+        elif (row + 1 < self.rows and self._is_empty_location(row+1, col)):
+            self.field[row+1, col] = np.random.randint(1, level+1)
             placed += 1
 
-        if(row -1 >= 0 and col -1 >=0 and self._is_empty_location(row-1, col-1)):
-            self.field[row-1, col-1] = level
+        if (col - 1 >= 0 and self._is_empty_location(row, col-1)):
+            self.field[row, col-1] = np.random.randint(1, level+1)
             placed += 1
-        elif(row + 1 < self.rows and col + 1 < self.cols and self._is_empty_location(row+1, col+1)):
-            self.field[row+1, col+1] = level
+        elif (col + 1 < self.cols and self._is_empty_location(row, col+1)):
+            self.field[row, col+1] = np.random.randint(1, level+1)
+            placed += 1
+
+        if (row - 1 >= 0 and col - 1 >=0 and self._is_empty_location(row-1, col-1)):
+            self.field[row-1, col-1] = np.random.randint(1, level+1)
+            placed += 1
+        elif (row + 1 < self.rows and col + 1 < self.cols and self._is_empty_location(row+1, col+1)):
+            self.field[row+1, col+1] = np.random.randint(1, level+1)
             placed += 1
 
         return placed
@@ -322,13 +319,15 @@ class ForagingEnv(Env):
 
         return True
 
-    def spawn_players(self, max_player_level,team):
+    def spawn_players(self, max_player_level, team):
         assert 'Helicopters' in team and 'Firetrucks' in team, \
             'Team must have a Helicopters and a FireTrucks definition'
         assert len(team['Firetrucks']) + len(team['Helicopters']) == len(self.players), \
             'Team must have the same number of FireTrucks and Helicopters as there are players'
-        fireTrucks = iter(team['Firetrucks'])
-        helicopters = iter(team['Helicopters'])
+        
+        vehicles = team['Firetrucks'] + team['Helicopters']
+
+        n_placed_players = 0
         for player in self.players:
 
             attempts = 0
@@ -338,22 +337,21 @@ class ForagingEnv(Env):
                 row = self.np_random.integers(0, self.rows)
                 col = self.np_random.integers(0, self.cols)
                 if self._is_empty_location(row, col):
+                    agent = vehicles[n_placed_players]
+                    if (n_placed_players < len(team['Firetrucks'])):
+                        player.set_controller(FireTruck(agent(player)))
+                    else:
+                        player.set_controller(Helicopter(agent(player)))
                     player.setup(
                         (row, col),
-                        self.np_random.integers(1, max_player_level + 1),
+                        player.controller.water_capacity // 100,
                         self.field_size,
                     )
-                    agent = next(fireTrucks, None)
-                    if(agent is not None):
-                        player.set_controller(Helicopter(agent(player)))
-                    else:
-                        agent = next(helicopters, None)
-                        player.set_controller(FireTruck(agent(player)))
+                    n_placed_players += 1
                     break
                 attempts += 1
 
             
-
     def _check_direction(self,action, player):
        return isinstance(player.controller, Helicopter) or \
                 (isinstance(player.controller, FireTruck) and action == player.direction)
@@ -384,8 +382,8 @@ class ForagingEnv(Env):
                 and self.field[player.position[0], player.position[1] + 1] == 0
             ) and self._check_direction(action, player) and\
                     self._is_empty_location(player.position[0], player.position[1] + 1)
-        elif action == Action.LOAD:
-            return self.adjacent_food(*player.position) > 0
+        elif action == Action.EXTINGUISH:
+            return self.adjacent_fire(*player.position) > 0
         elif action == Action.TURN_RIGHT or \
              action == Action.TURN_LEFT or \
              action == Action.TURN_AROUND: # only trucks can turn
@@ -448,7 +446,7 @@ class ForagingEnv(Env):
                 p for p in observation.players if not p.is_self
             ]
 
-            for i in range(self.max_food):
+            for i in range(self.max_fires):
                 obs[3 * i] = -1
                 obs[3 * i + 1] = -1
                 obs[3 * i + 2] = 0
@@ -459,14 +457,14 @@ class ForagingEnv(Env):
                 obs[3 * i + 2] = observation.field[y, x]
 
             for i in range(len(self.players)):
-                obs[self.max_food * 3 + 3 * i] = -1
-                obs[self.max_food * 3 + 3 * i + 1] = -1
-                obs[self.max_food * 3 + 3 * i + 2] = 0
+                obs[self.max_fires * 3 + 3 * i] = -1
+                obs[self.max_fires * 3 + 3 * i + 1] = -1
+                obs[self.max_fires * 3 + 3 * i + 2] = 0
 
             for i, p in enumerate(seen_players):
-                obs[self.max_food * 3 + 3 * i] = p.position[0]
-                obs[self.max_food * 3 + 3 * i + 1] = p.position[1]
-                obs[self.max_food * 3 + 3 * i + 2] = p.level
+                obs[self.max_fires * 3 + 3 * i] = p.position[0]
+                obs[self.max_fires * 3 + 3 * i + 1] = p.position[1]
+                obs[self.max_fires * 3 + 3 * i + 2] = p.level
 
             return obs
 
@@ -484,8 +482,8 @@ class ForagingEnv(Env):
                 player_x, player_y = player.position
                 agents_layer[player_x + self.sight, player_y + self.sight] = player.level
             
-            foods_layer = np.zeros(grid_shape, dtype=np.float32)
-            foods_layer[self.sight:-self.sight, self.sight:-self.sight] = self.field.copy()
+            fires_layer = np.zeros(grid_shape, dtype=np.float32)
+            fires_layer[self.sight:-self.sight, self.sight:-self.sight] = self.field.copy()
 
             access_layer = np.ones(grid_shape, dtype=np.float32)
             # out of bounds not accessible
@@ -497,12 +495,12 @@ class ForagingEnv(Env):
             for player in self.players:
                 player_x, player_y = player.position
                 access_layer[player_x + self.sight, player_y + self.sight] = 0.0
-            # food locations are not accessible
-            foods_x, foods_y = self.field.nonzero()
-            for x, y in zip(foods_x, foods_y):
+            # fire locations are not accessible
+            fires_x, fires_y = self.field.nonzero()
+            for x, y in zip(fires_x, fires_y):
                 access_layer[x + self.sight, y + self.sight] = 0.0
             
-            return np.stack([agents_layer, foods_layer, access_layer])
+            return np.stack([agents_layer, fires_layer, access_layer])
 
         def get_agent_grid_bounds(agent_x, agent_y):
             return agent_x, agent_x + 2 * self.sight + 1, agent_y, agent_y + 2 * self.sight + 1
@@ -533,11 +531,11 @@ class ForagingEnv(Env):
 
     def reset(self, **kwargs):
         self.field = np.zeros(self.field_size, np.int32)
-        self.spawn_players(self.max_player_level,kwargs['team'])
-        player_levels = sorted([player.level for player in self.players])
+        self.spawn_players(self.max_player_level, kwargs['team'])
+        # player_levels = sorted([player.level for player in self.players])
 
-        self.spawn_food(
-            self.max_food, max_level=sum(player_levels[:3])
+        self.spawn_fires(
+            self.max_fires, max_level=MAX_FIRE_LEVEL
         )
         self.current_step = 0
         self._game_over = False
@@ -567,7 +565,7 @@ class ForagingEnv(Env):
                 )
                 actions[i] = Action.NONE
 
-        loading_players = set()
+        extinguish_players = set()
         turning_right_players = set()
         turning_left_players = set()
         turning_around_players = set()
@@ -588,9 +586,9 @@ class ForagingEnv(Env):
                 collisions[(player.position[0], player.position[1] - 1)].append(player)
             elif action == Action.EAST:
                 collisions[(player.position[0], player.position[1] + 1)].append(player)
-            elif action == Action.LOAD:
+            elif action == Action.EXTINGUISH:
                 collisions[player.position].append(player)
-                loading_players.add(player)
+                extinguish_players.add(player)
             elif action == Action.TURN_RIGHT:
                 collisions[player.position].append(player)
                 turning_right_players.add(player)
@@ -615,41 +613,48 @@ class ForagingEnv(Env):
             elif players[0] in turning_around_players:
                 players[0].turn(180)
 
-        # finally process the loadings:
-        while loading_players:
-            # find adjacent food
-            player = loading_players.pop()
-            res = self.adjacent_food_location(*player.position)
+        # finally process the extinguish actions:
+        while extinguish_players:
+            # find adjacent fire(s)
+            player = extinguish_players.pop()
+            res = self.adjacent_fire_location(*player.position)
             if(res is None):
                 continue
+            # get fire level
             frow, fcol = res
-            food = self.field[frow, fcol]
+            fire_level = self.field[frow, fcol]
 
+            # adjacent players to the fire
             adj_players = self.adjacent_players(frow, fcol)
             adj_players = [
-                p for p in adj_players if p in loading_players or p is player
+                p for p in adj_players if p in extinguish_players or p is player
             ]
 
             adj_player_level = sum([a.level for a in adj_players])
 
-            loading_players = loading_players - set(adj_players)
+            extinguish_players = extinguish_players - set(adj_players)
 
-            if adj_player_level < food:
-                # failed to load
+            # print("adj_player_level: ", adj_player_level)
+            # print("fire_level: ", fire_level)
+
+            if adj_player_level < fire_level:
+                # failed to extinguish the fire completely
                 for a in adj_players:
                     a.reward -= self.penalty
                 continue
 
-            # else the food was loaded and each player scores points
+            # else the fire is extinguised and each player scores points
+            extinguished_level = 0
             for a in adj_players:
-                a.reward = float(a.level * food)
-                a.controller.water -= 1
+                a.reward = float(a.level * fire_level)
+                extinguished_level += a.controller.extinguish(fire_level)
+                fire_level = max(0, fire_level - extinguished_level)
                 if self._normalize_reward:
                     a.reward = a.reward / float(
-                        adj_player_level * self._food_spawned
+                        adj_player_level * self._fires_spawned
                     )  # normalize reward
-            # and the food is removed
-            self.field[frow, fcol] = 0
+            # and the fire level is updated
+            self.field[frow, fcol] = fire_level
 
         self._game_over = (
             self.field.sum() == 0 or self._max_episode_steps <= self.current_step

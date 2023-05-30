@@ -11,8 +11,9 @@ class HeuristicAgent(Agent):
     def _center_of_players(self, players):
         coords = np.array([player.position for player in players])
         return np.rint(coords.mean(axis=0))
-    def _compute_turn(self,direction,targetedDirection):
-        turns = [Action.NONE,Action.TURN_RIGHT,Action.TURN_AROUND,Action.TURN_LEFT]
+    
+    def _compute_turn(self, direction, targetedDirection):
+        turns = [Action.NONE, Action.TURN_RIGHT, Action.TURN_AROUND, Action.TURN_LEFT]
         return turns[(targetedDirection.value - direction.value) % 4]
 
     def _move_towards(self, target, allowed):
@@ -23,24 +24,27 @@ class HeuristicAgent(Agent):
         if r < y:
             if Action.NORTH in allowed:
                 return Action.NORTH
-            elif(isinstance(self.controller,FireTruck)):
-                return self._compute_turn(self.direction,Action.NORTH)
+            elif(isinstance(self.controller, FireTruck)):
+                return self._compute_turn(self.direction, Action.NORTH)
+        
         if r > y:
             if Action.SOUTH in allowed:
                 return Action.SOUTH
-            elif(isinstance(self.controller,FireTruck)):
-                return self._compute_turn(self.direction,Action.SOUTH)
+            elif(isinstance(self.controller, FireTruck)):
+                return self._compute_turn(self.direction, Action.SOUTH)
+        
         if c > x :
             if(Action.EAST in allowed):
                 return Action.EAST
-            elif(isinstance(self.controller,FireTruck)):
-                return self._compute_turn(self.direction,Action.EAST)
+            elif(isinstance(self.controller, FireTruck)):
+                return self._compute_turn(self.direction, Action.EAST)
             return Action.EAST
+        
         if c < x:
             if(Action.WEST in allowed):
                 return Action.WEST
-            elif(isinstance(self.controller,FireTruck)):
-                return self._compute_turn(self.direction,Action.WEST)
+            elif(isinstance(self.controller, FireTruck)):
+                return self._compute_turn(self.direction, Action.WEST)
             return Action.WEST
         
         # if we reach here, no action is possible to move towards target (choose one randomly)
@@ -52,20 +56,42 @@ class HeuristicAgent(Agent):
 
 class H1(HeuristicAgent):
     """
-	H1 agent always goes to the closest food
+	H1 agent always goes to the closest fire
 	"""
 
     name = "H1"
 
     def step(self, obs):
         try:
-            r, c = self._closest_food(obs)
+            r, c = self._closest_fire(obs)
         except TypeError:
             return random.choice(obs.actions)
         y, x = self.observed_position
 
         if (abs(r - y) + abs(c - x)) == 1:
-            return Action.LOAD
+            return Action.EXTINGUISH
+
+        try:
+            return self._move_towards((r, c), obs.actions)
+        except ValueError:
+            return random.choice(obs.actions)
+        
+class H1_1(HeuristicAgent):
+    """
+	H1 agent always goes to the strongest front of the closest fire
+	"""
+
+    name = "H1_1"
+
+    def step(self, obs):
+        try:
+            r, c = self._closest_fire(obs)
+        except TypeError:
+            return random.choice(obs.actions)
+        x, y = self.observed_position
+
+        if (abs(r - x) + abs(c - y)) == 1:
+            return Action.EXTINGUISH
 
         try:
             return self._move_towards((r, c), obs.actions)
@@ -85,13 +111,13 @@ class H2(HeuristicAgent):
         players_center = self._center_of_players(obs.players)
 
         try:
-            r, c = self._closest_food(obs, None, players_center)
+            r, c = self._closest_fire(obs, None, players_center)
         except TypeError:
             return random.choice(obs.actions)
         y, x = self.observed_position
 
         if (abs(r - y) + abs(c - x)) == 1:
-            return Action.LOAD
+            return Action.EXTINGUISH
 
         try:
             return self._move_towards((r, c), obs.actions)
@@ -109,13 +135,13 @@ class H3(HeuristicAgent):
     def step(self, obs):
 
         try:
-            r, c = self._closest_food(obs, self.level)
+            r, c = self._closest_fire(obs, self.level)
         except TypeError:
             return random.choice(obs.actions)
         y, x = self.observed_position
 
         if (abs(r - y) + abs(c - x)) == 1:
-            return Action.LOAD
+            return Action.EXTINGUISH
 
         try:
             return self._move_towards((r, c), obs.actions)
@@ -137,13 +163,13 @@ class H4(HeuristicAgent):
         players_sum_level = sum([a.level for a in obs.players])
 
         try:
-            r, c = self._closest_food(obs, players_sum_level, players_center)
+            r, c = self._closest_fire(obs, players_sum_level, players_center)
         except TypeError:
             return random.choice(obs.actions)
         y, x = self.observed_position
 
         if (abs(r - y) + abs(c - x)) == 1:
-            return Action.LOAD
+            return Action.EXTINGUISH
 
         try:
             return self._move_towards((r, c), obs.actions)

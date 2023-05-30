@@ -32,7 +32,7 @@ class Agent:
     def step(self, obs):
         raise NotImplemented("You must implement an agent")
 
-    def _closest_food(self, obs, max_food_level=None, start=None):
+    def _closest_fire(self, obs, max_food_level=None, start=None):
 
         if start is None:
             x, y = self.observed_position
