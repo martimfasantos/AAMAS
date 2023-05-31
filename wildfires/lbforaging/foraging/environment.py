@@ -422,7 +422,8 @@ class ForagingEnv(Env):
              action == Action.TURN_AROUND: # only trucks can turn
             return isinstance(player.controller, FireTruck)
         elif action == Action.REFILL:
-            return self.adjacent_water_source_location(*player.position) 
+            return self.adjacent_water_source_location(*player.position) and \
+                player.controller.water < player.controller.water_capacity
 
 
         self.logger.error("Undefined action {} from {}".format(action, player.name))

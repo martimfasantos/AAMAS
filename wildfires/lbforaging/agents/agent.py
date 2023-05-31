@@ -16,6 +16,8 @@ class Agent:
         self.player = player
 
     def __getattr__(self, item):
+        if(item == "water"):
+            return self.controller.water
         return getattr(self.player, item)
 
     def _step(self, obs):

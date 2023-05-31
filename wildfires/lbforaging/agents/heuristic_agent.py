@@ -38,14 +38,12 @@ class HeuristicAgent(Agent):
                 return Action.EAST
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.EAST)
-            return Action.EAST
         
         if c < x:
             if(Action.WEST in allowed):
                 return Action.WEST
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.WEST)
-            return Action.WEST
         
         # if we reach here, no action is possible to move towards target (choose one randomly)
         raise ValueError("No simple path found")
@@ -175,3 +173,56 @@ class H4(HeuristicAgent):
             return self._move_towards((r, c), obs.actions)
         except ValueError:
             return random.choice(obs.actions)
+        
+
+class H5(HeuristicAgent):
+    """
+     H5 Agent always goes to the closest fire that it can put out or will go and refill water
+     """
+
+
+    name = "H5"
+
+    def _refill_water(self, obs):
+        try:
+            r, c = self._closest_water_source(obs)
+        except TypeError:
+            return random.choice(obs.actions)
+        y, x = self.observed_position
+
+        if (abs(r - y) + abs(c - x)) == 1:
+            return Action.REFILL
+
+        try:
+            return self._move_towards((r, c), obs.actions)
+        except ValueError:
+            return random.choice(obs.actions)
+        
+
+
+    def step(self, obs):
+
+        if(self.water == 0):
+            return self._refill_water(obs)
+        else:
+            field = np.copy(obs.field)
+            # extract the fires that it can put out
+            r,c = np.where((field>0).any() and field <= (self.water // 100))
+            
+            y, x = self.observed_position
+            try:
+                min_idx = ((r - x) ** 2 + (c - y) ** 2).argmin()
+            except ValueError:
+                return self._refill_water(obs)
+            
+            r,c = r[min_idx], c[min_idx]
+
+            print(f"{self.controller.name} closeste fire is {(r,c)}")
+
+            if (abs(r - y) + abs(c - x)) == 1:
+                return Action.EXTINGUISH
+
+            try:
+                return self._move_towards((r, c), obs.actions)
+            except ValueError:
+                return random.choice(obs.actions)
