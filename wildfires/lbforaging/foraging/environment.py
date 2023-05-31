@@ -6,6 +6,7 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
+import random
 from .vehicle import FireTruck, Helicopter
 
 TILES_PER_FIRE = 4
@@ -644,7 +645,10 @@ class ForagingEnv(Env):
         # and do movements for non colliding players
         for pos, players in collisions.items():
             if len(players) > 1:  # make sure no more than an player will arrive at location
+                # TODO: this case will be handled with cooperation and coordination
+                random.choice(players).position = pos
                 continue
+            
             players[0].position = pos
             # process turnings
             if players[0] in turning_right_players:
@@ -682,7 +686,6 @@ class ForagingEnv(Env):
                 # failed to extinguish the fire completely
                 for a in adj_players:
                     a.reward -= self.penalty
-                continue
 
             # else the fire is extinguised and each player scores points
             extinguished_level = 0

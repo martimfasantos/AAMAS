@@ -42,10 +42,18 @@ def generateTeams(mode, n_agents):
     elif(mode == 2):
         return {
             "Greedy H1 Agents": {
-                "Helicopters": [H5 for _ in range(n_agents // 2)],
-                "Firetrucks": [H5 for _ in range(n_agents // 2)]
+                "Helicopters": [H1 for _ in range(n_agents // 2)],
+                "Firetrucks": [H1 for _ in range(n_agents // 2)]
             }
         }
+    elif(mode == 3):
+        return {
+            "Greedy H2 Agents": {
+                "Helicopters": [H2 for _ in range(n_agents // 2)],
+                "Firetrucks": [H2 for _ in range(n_agents // 2)]
+            }
+        }
+    
     else:
         return {
             "Random Agents": {
@@ -84,13 +92,6 @@ def _game_loop(env, render, debug, team):
 
         actions = [player.step(obs[i]) for i, player in enumerate(env.players)]
 
-        print(f"Step {env.current_step}")
-        for i,action in enumerate(actions):
-            print(f"Player {env.players[i].name} has available {obs[i].actions}")
-
-        for i,action in enumerate(actions):
-            print(f"Player {env.players[i].name} will do action {action}")
-        
         obs, nreward, ndone, _ = env.step(actions)
         if sum(nreward) > 0:
             pass
