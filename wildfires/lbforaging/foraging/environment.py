@@ -25,6 +25,7 @@ class Action(Enum):
     TURN_LEFT = 6
     TURN_RIGHT = 7
     TURN_AROUND = 8
+    REFILL = 9
 
 
 class CellEntity(Enum):
@@ -80,7 +81,8 @@ class ForagingEnv(Env):
 
     metadata = {"render.modes": ["human"]}
 
-    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.EXTINGUISH, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND]
+    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, \
+                  Action.EXTINGUISH, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND,Action.REFILL]
     Observation = namedtuple(
         "Observation",
         ["field", "actions", "players", "game_over", "sight", "current_step"],
@@ -235,10 +237,10 @@ class ForagingEnv(Env):
 
     def adjacent_fire(self, row, col):
         return (
-            self.field[max(row - 1, 0), col]
-            + self.field[min(row + 1, self.rows - 1), col]
-            + self.field[row, max(col - 1, 0)]
-            + self.field[row, min(col + 1, self.cols - 1)]
+            (self.field[max(row - 1, 0), col] if self.field[max(row - 1, 0), col] >0 else 0)
+            + (self.field[min(row + 1, self.rows - 1), col] if self.field[min(row + 1, self.rows - 1), col] >0 else 0)
+            + (self.field[row, max(col - 1, 0)] if self.field[row, max(col - 1, 0)] >0 else 0)
+            + (self.field[row, min(col + 1, self.cols - 1)] if self.field[row, min(col + 1, self.cols - 1)] >0 else 0)
         )
 
     def adjacent_fire_location(self, row, col):
@@ -249,6 +251,16 @@ class ForagingEnv(Env):
         elif col > 1 and self.field[row, col - 1] > 0:
             return row, col - 1
         elif col < self.cols - 1 and self.field[row, col + 1] > 0:
+            return row, col + 1
+        
+    def adjacent_water_source_location(self, row, col):
+        if row > 1 and self.field[row - 1, col] == -1:
+            return row - 1, col
+        elif row < self.rows - 1 and self.field[row + 1, col] == -1:
+            return row + 1, col
+        elif col > 1 and self.field[row, col - 1] ==  -1:
+            return row, col - 1
+        elif col < self.cols - 1 and self.field[row, col + 1] == -1:
             return row, col + 1
 
     def adjacent_players(self, row, col):
@@ -284,6 +296,27 @@ class ForagingEnv(Env):
 
             fire_count += 1 + self._fill_adjacent_tiles(row, col, fire_level)
         self._fires_spawned = self.field.sum()
+
+    def spawn_water_sources(self, max_fires):
+        water_sources = 0
+        limit = self.np_random.integers(1, max(max_fires // (2 * TILES_PER_FIRE),2))
+        attempts = 0
+
+        while water_sources < limit and attempts < 1000:
+            attempts += 1
+            row = self.np_random.integers(1, self.rows - 1)
+            col = self.np_random.integers(1, self.cols - 1)
+
+            # check if it has neighbors:
+            if (
+                self.neighborhood(row, col).sum() > 0
+                or self.neighborhood(row, col, distance=2, ignore_diag=True) > 0
+                or not self._is_empty_location(row, col)
+            ):
+                continue
+            
+            water_sources += 1
+            self.field[row, col] = -1
 
     def _fill_adjacent_tiles(self, row, col, level):
         placed = 0
@@ -388,6 +421,9 @@ class ForagingEnv(Env):
              action == Action.TURN_LEFT or \
              action == Action.TURN_AROUND: # only trucks can turn
             return isinstance(player.controller, FireTruck)
+        elif action == Action.REFILL:
+            return self.adjacent_water_source_location(*player.position) 
+
 
         self.logger.error("Undefined action {} from {}".format(action, player.name))
         raise ValueError("Undefined action")
@@ -451,7 +487,7 @@ class ForagingEnv(Env):
                 obs[3 * i + 1] = -1
                 obs[3 * i + 2] = 0
 
-            for i, (y, x) in enumerate(zip(*np.nonzero(observation.field))):
+            for i, (y, x) in enumerate(zip(*np.where(observation.field >0))):
                 obs[3 * i] = y
                 obs[3 * i + 1] = x
                 obs[3 * i + 2] = observation.field[y, x]
@@ -537,6 +573,8 @@ class ForagingEnv(Env):
         self.spawn_fires(
             self.max_fires, max_level=MAX_FIRE_LEVEL
         )
+
+        self.spawn_water_sources(self.max_fires)
         self.current_step = 0
         self._game_over = False
         self._gen_valid_moves()
@@ -598,6 +636,8 @@ class ForagingEnv(Env):
             elif action == Action.TURN_AROUND:
                 collisions[player.position].append(player)
                 turning_around_players.add(player)
+            elif action == Action.REFILL:
+                player.controller.refill()
  
 
         # and do movements for non colliding players

@@ -97,6 +97,7 @@ class Viewer(object):
 
         self.img_apple = pyglet.resource.image("fire.png")
         self.img_heli = pyglet.resource.image("helicopter.png")
+        self.water_source = pyglet.resource.image("water_source.png")
         self.truckRotations = [pyglet.resource.image(f"firetruck{x}.png") for x in [0,90,180,270]]
 
 
@@ -182,7 +183,7 @@ class Viewer(object):
         for row, col in idxes:
             apples.append(
                 pyglet.sprite.Sprite(
-                    self.img_apple,
+                    self.img_apple if env.field[row, col] != -1 else self.water_source,
                     (self.grid_size + 1) * col,
                     self.height - (self.grid_size + 1) * (row + 1),
                     batch=batch,
@@ -193,6 +194,8 @@ class Viewer(object):
         batch.draw()
 
         for row, col in idxes:
+            if(env.field[row,col] == -1):
+                continue
             self._draw_badge(row, col, env.field[row, col])
 
     def _draw_players(self, env):

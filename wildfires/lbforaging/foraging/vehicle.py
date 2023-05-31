@@ -16,7 +16,7 @@ class Vehicle():
         self.logger = logging.getLogger(__name__)
         self.agent = agent
         self.water_capacity = water_capacity
-        self.water = water_capacity # vehicles start with full water
+        self.water = water_capacity //2 # vehicles start with full water
 
 
     def step(self, obs):
@@ -29,7 +29,10 @@ class Vehicle():
             return extiguised_level
         else:
             self.water -= fire_level * 100
-            return fire_level      
+            return fire_level     
+
+    def refill(self,amount=None):
+        self.water = amount if amount else self.water_capacity
 
 
 class Helicopter(Vehicle):

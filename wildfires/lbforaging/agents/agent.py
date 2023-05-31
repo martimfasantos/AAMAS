@@ -44,7 +44,27 @@ class Agent:
         if max_food_level:
             field[field > max_food_level] = 0
 
-        r, c = np.nonzero(field)
+        r, c = np.where(field > 0)
+        try:
+            min_idx = ((r - x) ** 2 + (c - y) ** 2).argmin()
+        except ValueError:
+            return None
+
+        return r[min_idx], c[min_idx]
+    
+    def _closest_water_source(self, obs, max_food_level=None, start=None):
+
+        if start is None:
+            x, y = self.observed_position
+        else:
+            x, y = start
+
+        field = np.copy(obs.field)
+
+        if max_food_level:
+            field[field > max_food_level] = 0
+
+        r, c = np.where(field == -1)
         try:
             min_idx = ((r - x) ** 2 + (c - y) ** 2).argmin()
         except ValueError:
