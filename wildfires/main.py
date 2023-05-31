@@ -149,7 +149,8 @@ if __name__ == "__main__":
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
 
     parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
-    parser.add_argument("--mode", type=int, default=0, help="How should agents behave (0 - Randomly, 1 - Pseudo-randomly , 2- Self defined teams)")
+    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t0 - Randomly\n\t1 - \
+                        Pseudo-randomly\n\t2 - Greedy Heuristic 1\n\t3 - Greedy Heuristic2\n\t4 - Self defined teams")
 
     args = parser.parse_args()
     main(args.times, args.render, args.fires, args.n_agents, args.mode, args.debug,args.max_steps)
