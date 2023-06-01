@@ -5,9 +5,6 @@ import time
 import gym
 import numpy as np
 from lbforaging.foraging.environment import TILES_PER_FIRE
-from lbforaging.agents.random_agent import RandomAgent
-from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
-from lbforaging.agents.heuristic_agent import H1
 from lbforaging.agents import *
 import warnings
 from gym.envs.registration import register

@@ -56,8 +56,9 @@ class Player:
         self.orietation = 0
         self.direction = Action.NORTH
         self.extiguishingMode = ExtiguishingMode.ANY
+        self.id = None
 
-    def setup(self, position, level, field_size):
+    def setup(self, position, level, field_size,id):
         self.history = []
         self.position = position
         self.level = level
@@ -443,6 +444,7 @@ class ForagingEnv(Env):
                         (row, col),
                         player.controller.water_capacity // 100,
                         self.field_size,
+                        n_placed_players
                     )
                     n_placed_players += 1
                     break
