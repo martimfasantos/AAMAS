@@ -55,14 +55,14 @@ def generateTeams(mode, n_agents):
         }
     elif(mode == 4):
         return {
-            "Greedy H2 Agents": {
+            "Greedy H3 Agents": {
                 "Helicopters": [H3 for _ in range(n_agents // 2)],
                 "Firetrucks": [H3 for _ in range(n_agents // 2)]
             }
         }
     elif(mode == 5):
         return {
-            "Greedy H2 Agents": {
+            "Greedy H4 Agents": {
                 "Helicopters": [H4 for _ in range(n_agents // 2)],
                 "Firetrucks": [H4 for _ in range(n_agents // 2)]
             }
