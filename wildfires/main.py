@@ -53,6 +53,20 @@ def generateTeams(mode, n_agents):
                 "Firetrucks": [H2 for _ in range(n_agents // 2)]
             }
         }
+    elif(mode == 4):
+        return {
+            "Greedy H2 Agents": {
+                "Helicopters": [H3 for _ in range(n_agents // 2)],
+                "Firetrucks": [H3 for _ in range(n_agents // 2)]
+            }
+        }
+    elif(mode == 5):
+        return {
+            "Greedy H2 Agents": {
+                "Helicopters": [H4 for _ in range(n_agents // 2)],
+                "Firetrucks": [H4 for _ in range(n_agents // 2)]
+            }
+        }
     
     else:
         return {
@@ -144,7 +158,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--max_steps", type=int, default=100, help="How many steps in each episode"
+        "--max_steps", type=int, default=400, help="How many steps in each episode"
     )
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
 

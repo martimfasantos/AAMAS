@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from . import Agent
-from ..foraging.environment import Action
+from ..foraging.environment import Action,ExtiguishingMode
 from ..foraging import FireTruck
 
 
@@ -10,7 +10,6 @@ class HeuristicAgent(Agent):
 
     def __init__(self, player):
         super().__init__(player)
-        self.forbidden = set()
 
     def _center_of_players(self, players):
         coords = np.array([player.position for player in players])
@@ -26,73 +25,37 @@ class HeuristicAgent(Agent):
         r, c = target
 
         # self.forbidden prevents the agent from going back and forth between two tiles
-        if r < y and Action.NORTH not in self.forbidden:
+        if r < y and Action.NORTH:
             if Action.NORTH in allowed:
-                self.forbidden.clear()
                 return Action.NORTH
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.NORTH)
-            else:
-                if(Action.EAST in allowed):
-                    self.forbidden.add(Action.WEST)
-                    return Action.EAST
-                elif(Action.WEST in allowed):
-                    self.forbidden.add(Action.EAST)
-                    return Action.WEST
-                else:
-                    return Action.NONE
         
-        if r > y and Action.SOUTH not in self.forbidden:
+        if r > y and Action.SOUTH:
             if Action.SOUTH in allowed:
-                self.forbidden.clear()
                 return Action.SOUTH
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.SOUTH)
-            else:
-                if(Action.EAST in allowed):
-                    self.forbidden.add(Action.WEST)
-                    return Action.EAST
-                elif(Action.WEST in allowed):
-                    self.forbidden.add(Action.EAST)
-                    return Action.WEST
-                else:
-                    return Action.NONE
+            
         
-        if c > x and Action.EAST not in self.forbidden:
+        if c > x and Action.EAST:
             if(Action.EAST in allowed):
-                self.forbidden.clear()
                 return Action.EAST
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.EAST)
-            else:
-                if(Action.NORTH in allowed):
-                    self.forbidden.add(Action.SOUTH)
-                    return Action.NORTH
-                elif(Action.SOUTH in allowed):
-                    self.forbidden.add(Action.NORTH)
-                    return Action.SOUTH
-                else:
-                    return Action.NONE
+            
         
-        if c < x and Action.WEST not in self.forbidden:
+        if c < x and Action.WEST:
             if(Action.WEST in allowed):
-                self.forbidden.clear()
                 return Action.WEST
             elif(isinstance(self.controller, FireTruck)):
                 return self._compute_turn(self.direction, Action.WEST)
-            else:
-                if(Action.NORTH in allowed):
-                    self.forbidden.add(Action.SOUTH)
-                    return Action.NORTH
-                elif(Action.SOUTH in allowed):
-                    self.forbidden.add(Action.NORTH)
-                    return Action.SOUTH
-                else:
-                    return Action.NONE
+            
+        return Action.NONE
             
 
     def _refill_water(self, obs):
-
+        
         y,x = self.observed_position
         if(self.targetWaterResource is not None):
             r,c = self.targetWaterResource
@@ -105,10 +68,7 @@ class HeuristicAgent(Agent):
             self.targetFire = None
             return Action.REFILL
         else:
-            try:
-                return self._move_towards((r, c), obs.actions)
-            except ValueError:
-                return random.choice(obs.actions)
+            return self._move_towards((r, c), obs.actions)
 
 
     def step(self, obs):
@@ -152,10 +112,7 @@ class H1(HeuristicAgent):
                 self.targetFire = None
                 return Action.EXTINGUISH
             else:
-                try:
-                    return self._move_towards((r, c), obs.actions)
-                except ValueError:
-                    return random.choice(obs.actions)
+                return self._move_towards((r, c), obs.actions)
 
 # TODO: Adapt this agent   
 class H1_1(HeuristicAgent):
@@ -183,7 +140,7 @@ class H1_1(HeuristicAgent):
 
 class H2(HeuristicAgent):
     """
-     H5 Agent always goes to the closest fire that it can put out or will go and refill water.
+     H2 Agent always goes to the closest fire that it can put out or will go and refill water.
      If it can't put out any more fires, it won't do anything else
      """
 
@@ -221,12 +178,82 @@ class H2(HeuristicAgent):
                 self.targetFire = None
                 return Action.EXTINGUISH
             else:
-                try:
-                    return self._move_towards((r, c), obs.actions)
-                except ValueError:
-                    return random.choice(obs.actions)
+                return self._move_towards((r, c), obs.actions)
                 
 
 class H3(HeuristicAgent):
-    # TODO: Implement an agent that goes to the strongest fire and extinguishes it
-    pass
+    name = "H3"
+
+    """
+     H3 Agent always goes to the strongest fire burnning (at the moment) or will go and refill water.
+     """
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.targetFire = None
+        self.targetWaterResource = None
+        self.player.extiguishingMode = ExtiguishingMode.STRONGEST
+
+
+
+    def step(self, obs):
+
+        if(self.water == 0):
+            self.targetFire = None
+            return self._refill_water(obs)
+        else:
+            y,x = self.observed_position
+            if(self.targetFire is not None and obs.field[*self.targetFire] != 0):
+                r,c = self.targetFire
+            else:
+                r,c = np.unravel_index(np.argmax(obs.field), obs.field.shape)
+                self.targetFire = (r,c)
+
+            dis = abs(r - y) + abs(c - x)
+            if dis == 1:
+                self.targetFire = None
+                return Action.EXTINGUISH
+            elif dis == 0:
+                return random.choice([Action.NORTH, Action.SOUTH, Action.EAST, Action.WEST])
+            else:
+                return self._move_towards((r, c), obs.actions)
+            
+class H4(HeuristicAgent):
+    name = "H4"
+
+    """
+     H3 Agent always goes to the weakest fire burnning (at the moment) or will go and refill water.
+     """
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.targetFire = None
+        self.targetWaterResource = None
+        self.player.extiguishingMode = ExtiguishingMode.WEAKEST
+
+
+
+    def step(self, obs):
+
+        if(self.water == 0):
+            self.targetFire = None
+            return self._refill_water(obs)
+        else:
+            y,x = self.observed_position
+            if(self.targetFire is not None and obs.field[*self.targetFire] != 0):
+                r,c = self.targetFire
+            else:
+                field = np.copy(obs.field)
+                field[field == -1] = np.iinfo(np.int32).max
+                field[field == 0] = np.iinfo(np.int32).max
+                r,c = np.unravel_index(np.argmin(field), field.shape)
+                self.targetFire = (r,c)
+
+            dis = abs(r - y) + abs(c - x)
+            if dis == 1:
+                self.targetFire = None
+                return Action.EXTINGUISH
+            elif dis == 0:
+                return random.choice([Action.NORTH, Action.SOUTH, Action.EAST, Action.WEST])
+            else:
+                return self._move_towards((r, c), obs.actions)

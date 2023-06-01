@@ -16,6 +16,12 @@ MAX_WATER_DEPOSIT_SIZE = 500
 MAX_PLAYER_LEVEL = MAX_WATER_DEPOSIT_SIZE // 100
 
 
+class ExtiguishingMode(Enum):
+    STRONGEST = 0
+    WEAKEST = 1
+    ANY = 3
+
+
 class Action(Enum):
     NORTH = 0
     EAST = 1
@@ -49,6 +55,7 @@ class Player:
         self.current_step = None
         self.orietation = 0
         self.direction = Action.NORTH
+        self.extiguishingMode = ExtiguishingMode.ANY
 
     def setup(self, position, level, field_size):
         self.history = []
@@ -244,15 +251,56 @@ class ForagingEnv(Env):
             + (self.field[row, min(col + 1, self.cols - 1)] if self.field[row, min(col + 1, self.cols - 1)] >0 else 0)
         )
 
-    def adjacent_fire_location(self, row, col):
-        if row > 1 and self.field[row - 1, col] > 0:
-            return row - 1, col
-        elif row < self.rows - 1 and self.field[row + 1, col] > 0:
-            return row + 1, col
-        elif col > 1 and self.field[row, col - 1] > 0:
-            return row, col - 1
-        elif col < self.cols - 1 and self.field[row, col + 1] > 0:
-            return row, col + 1
+    def adjacent_fire_location(self, row, col,mode):
+        if(mode == ExtiguishingMode.ANY):
+            if row >= 1 and self.field[row - 1, col] > 0:
+                return row - 1, col
+            elif row <= self.rows - 1 and self.field[row + 1, col] > 0:
+                return row + 1, col
+            elif col >= 1 and self.field[row, col - 1] > 0:
+                return row, col - 1
+            elif col <= self.cols - 1 and self.field[row, col + 1] > 0:
+                return row, col + 1
+        elif(mode == ExtiguishingMode.STRONGEST):
+            strongest = -1
+            strongest_location = None
+            if row >= 1 and self.field[row - 1, col] > 0:
+                stronger = self.field[row, col - 1] > strongest
+                strongest = self.field[row - 1, col] if stronger else strongest
+                strongest_location = (row - 1, col) if stronger else strongest_location
+            if row <= self.rows - 1 and self.field[row + 1, col] > 0:
+                stronger = self.field[row, col - 1] > strongest
+                strongest = self.field[row + 1, col] if stronger else strongest
+                strongest_location = (row + 1, col) if stronger else strongest_location
+            if col >= 1 and self.field[row, col - 1] > 0:
+                stronger = self.field[row, col - 1] > strongest
+                strongest = self.field[row, col - 1] if stronger else strongest
+                strongest_location = (row, col - 1) if stronger else strongest_location
+            if col <= self.cols - 1 and self.field[row, col + 1] > 0:
+                stronger = self.field[row, col - 1] > strongest
+                strongest = self.field[row, col + 1] if stronger else strongest
+                strongest_location = (row, col + 1) if stronger else strongest_location
+            return strongest_location
+        elif(mode == ExtiguishingMode.WEAKEST):
+            weakest = np.iinfo(np.int32).max
+            weakest_location = None
+            if row >= 1 and self.field[row - 1, col] > 0:
+                weaker = self.field[row, col - 1] < weakest
+                weakest = self.field[row - 1, col] if weaker else weakest
+                weakest_location = (row - 1, col) if weaker else weakest_location
+            if row <= self.rows - 1 and self.field[row + 1, col] > 0:
+                weaker = self.field[row, col - 1] < weakest
+                weakest = self.field[row + 1, col] if weaker else weakest
+                weakest_location = (row + 1, col) if weaker else weakest_location
+            if col >= 1 and self.field[row, col - 1] > 0:
+                weaker = self.field[row, col - 1] < weakest
+                weakest = self.field[row, col - 1] if weaker else weakest
+                weakest_location = (row, col - 1) if weaker else weakest_location
+            if col <= self.cols - 1 and self.field[row, col + 1] > 0:
+                weaker = self.field[row, col - 1] < weakest
+                weakest = self.field[row, col + 1] if weaker else weakest
+                weakest_location = (row, col + 1) if weaker else weakest_location
+            return weakest_location
         
     def adjacent_water_source_location(self, row, col):
         if row > 1 and self.field[row - 1, col] == -1:
@@ -394,28 +442,13 @@ class ForagingEnv(Env):
         if action == Action.NONE:
             return True
         elif action == Action.NORTH:
-            return (
-                player.position[0] > 0
-                and self.field[player.position[0] - 1, player.position[1]] == 0
-            ) and self._check_direction(action, player) and \
-                self._is_empty_location(player.position[0] - 1, player.position[1])
+            return player.position[0] > 0 and self._check_direction(action, player)
         elif action == Action.SOUTH:
-            return (
-                player.position[0] < self.rows - 1
-                and self.field[player.position[0] + 1, player.position[1]] == 0
-            ) and self._check_direction(action, player) and self._is_empty_location(player.position[0] + 1, player.position[1])
+            return player.position[0] < self.rows - 1 and self._check_direction(action, player)
         elif action == Action.WEST:
-            return (
-                player.position[1] > 0
-                and self.field[player.position[0], player.position[1] - 1] == 0
-            ) and self._check_direction(action, player) and\
-                  self._is_empty_location(player.position[0], player.position[1] - 1)
+            return player.position[1] > 0 and self._check_direction(action, player)
         elif action == Action.EAST:
-            return (
-                player.position[1] < self.cols - 1
-                and self.field[player.position[0], player.position[1] + 1] == 0
-            ) and self._check_direction(action, player) and\
-                    self._is_empty_location(player.position[0], player.position[1] + 1)
+            return player.position[1] < self.cols - 1 and self._check_direction(action, player)
         elif action == Action.EXTINGUISH:
             return self.adjacent_fire(*player.position) > 0
         elif action == Action.TURN_RIGHT or \
@@ -644,25 +677,21 @@ class ForagingEnv(Env):
 
         # and do movements for non colliding players
         for pos, players in collisions.items():
-            if len(players) > 1:  # make sure no more than an player will arrive at location
-                # TODO: this case will be handled with cooperation and coordination
-                random.choice(players).position = pos
-                continue
-            
-            players[0].position = pos
-            # process turnings
-            if players[0] in turning_right_players:
-                players[0].turn(90)
-            elif players[0] in turning_left_players:
-                players[0].turn(-90)
-            elif players[0] in turning_around_players:
-                players[0].turn(180)
+            for player in players:
+                player.position = pos
+                # process turnings
+                if player in turning_right_players:
+                    player.turn(90)
+                elif player in turning_left_players:
+                    player.turn(-90)
+                elif player in turning_around_players:
+                    player.turn(180)
 
         # finally process the extinguish actions:
         while extinguish_players:
             # find adjacent fire(s)
             player = extinguish_players.pop()
-            res = self.adjacent_fire_location(*player.position)
+            res = self.adjacent_fire_location(*player.position,player.extiguishingMode)
             if(res is None):
                 continue
             # get fire level
@@ -692,16 +721,18 @@ class ForagingEnv(Env):
             for a in adj_players:
                 a.reward = float(a.level * fire_level)
                 extinguished_level += a.controller.extinguish(fire_level)
-                fire_level = max(0, fire_level - extinguished_level)
                 if self._normalize_reward:
                     a.reward = a.reward / float(
                         adj_player_level * self._fires_spawned
                     )  # normalize reward
+            fire_level = max(0, fire_level - extinguished_level)
             # and the fire level is updated
             self.field[frow, fcol] = fire_level
 
+        field = np.copy(self.field)
+        field[field == -1] = 0
         self._game_over = (
-            self.field.sum() == 0 or self._max_episode_steps <= self.current_step
+            field.sum() == 0 or self._max_episode_steps <= self.current_step
         )
         self._gen_valid_moves()
 
