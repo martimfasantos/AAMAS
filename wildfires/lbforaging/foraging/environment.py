@@ -56,8 +56,9 @@ class Player:
         self.orietation = 0
         self.direction = Action.NORTH
         self.extinguishing_mode = ExtinguishingMode.ANY
+        self.id = None
 
-    def setup(self, position, level, field_size):
+    def setup(self, position, level, field_size,id):
         self.history = []
         self.position = position
         self.level = level
@@ -93,11 +94,13 @@ class ForagingEnv(Env):
                   Action.EXTINGUISH, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND,Action.REFILL]
     Observation = namedtuple(
         "Observation",
-        ["field", "actions", "players", "game_over", "sight", "current_step"],
+        ["field", "actions", "players", "game_over", "sight", "current_step","fires"],
     )
     PlayerObservation = namedtuple(
         "PlayerObservation", ["position", "level", "history", "reward", "is_self"]
     )  # reward is available only if is_self
+
+    Fire = namedtuple("Fire", ["row","col", "level"])
 
     def __init__(
         self,
@@ -137,6 +140,8 @@ class ForagingEnv(Env):
         self.observation_space = gym.spaces.Tuple(tuple([self._get_observation_space()] * len(self.players)))
 
         self.viewer = None
+
+        self.fires = []
 
         self.n_agents = len(self.players)
 
@@ -382,27 +387,38 @@ class ForagingEnv(Env):
 
     def _fill_adjacent_tiles(self, row, col, level):
         placed = 0
+        fires = []
+        fires.append(self.Fire(row, col, level))
         if (row - 1 >= 0 and self._is_empty_location(row-1, col)):
             self.field[row-1, col] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row-1, col, self.field[row-1, col]))
             placed += 1
+
         elif (row + 1 < self.rows and self._is_empty_location(row+1, col)):
             self.field[row+1, col] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row+1, col, self.field[row+1, col]))
+        
             placed += 1
 
         if (col - 1 >= 0 and self._is_empty_location(row, col-1)):
             self.field[row, col-1] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row, col-1, self.field[row, col-1]))
             placed += 1
         elif (col + 1 < self.cols and self._is_empty_location(row, col+1)):
             self.field[row, col+1] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row, col+1, self.field[row, col+1]))
             placed += 1
 
         if (row - 1 >= 0 and col - 1 >=0 and self._is_empty_location(row-1, col-1)):
             self.field[row-1, col-1] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row-1, col-1, self.field[row-1, col-1]))
             placed += 1
         elif (row + 1 < self.rows and col + 1 < self.cols and self._is_empty_location(row+1, col+1)):
             self.field[row+1, col+1] = np.random.randint(1, level+1)
+            fires.append(self.Fire(row+1, col+1, self.field[row+1, col+1]))
             placed += 1
 
+        self.fires.append(fires)
         return placed
 
     def _is_empty_location(self, row, col):
@@ -441,6 +457,7 @@ class ForagingEnv(Env):
                         (row, col),
                         player.controller.water_capacity // 100,
                         self.field_size,
+                        n_placed_players
                     )
                     n_placed_players += 1
                     break
@@ -519,7 +536,17 @@ class ForagingEnv(Env):
             game_over=self.game_over,
             sight=self.sight,
             current_step=self.current_step,
+            fires=self._active_fires(),
         )
+    
+    def _active_fires(self):
+        fires = []
+        for group in self.fires:
+            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row,fire.col]) \
+                        for fire in group if self.field[fire.row,fire.col] > 0])
+        self.fires = fires
+        return self.fires
+
 
     def _make_gym_obs(self):
         def make_obs_array(observation):
