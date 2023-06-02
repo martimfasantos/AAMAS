@@ -7,7 +7,7 @@ import numpy as np
 from lbforaging.foraging.environment import TILES_PER_FIRE
 from lbforaging.agents.random_agent import RandomAgent
 from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
-from lbforaging.agents.heuristic_agent import H1
+from lbforaging.agents.heuristic_agent import H1, H2, H3, H4, H5
 from lbforaging.agents import *
 import warnings
 from gym.envs.registration import register
@@ -25,46 +25,53 @@ def generateTeams(mode, n_agents):
     Generates a dictionary of teams and their agents
     """
 
-    if(mode == 0):
+    if mode == 0:
         return {
             "Random Agents": {
                 "Helicopters": [RandomAgent for _ in range(n_agents // 2)],
                 "Firetrucks": [RandomAgent for _ in range(n_agents // 2)]
             }
         }
-    elif(mode == 1):
+    elif mode == 1:
         return {
             "PseudoRandom Agents": {
                 "Helicopters": [PseudoRandomAgent for _ in range(n_agents // 2)],
                 "Firetrucks": [PseudoRandomAgent for _ in range(n_agents // 2)]
             }
         }
-    elif(mode == 2):
+    elif mode == 2:
         return {
             "Greedy H1 Agents": {
                 "Helicopters": [H1 for _ in range(n_agents // 2)],
                 "Firetrucks": [H1 for _ in range(n_agents // 2)]
             }
         }
-    elif(mode == 3):
+    elif mode == 3:
         return {
             "Greedy H2 Agents": {
                 "Helicopters": [H2 for _ in range(n_agents // 2)],
                 "Firetrucks": [H2 for _ in range(n_agents // 2)]
             }
         }
-    elif(mode == 4):
+    elif mode == 4:
         return {
-            "Greedy H2 Agents": {
+            "Greedy H3 Agents": {
                 "Helicopters": [H3 for _ in range(n_agents // 2)],
                 "Firetrucks": [H3 for _ in range(n_agents // 2)]
             }
         }
-    elif(mode == 5):
+    elif mode == 5:
         return {
-            "Greedy H2 Agents": {
+            "Greedy H4 Agents": {
                 "Helicopters": [H4 for _ in range(n_agents // 2)],
                 "Firetrucks": [H4 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 6:
+        return {
+            "Greedy H5 Agents": {
+                "Helicopters": [H5 for _ in range(n_agents // 2)],
+                "Firetrucks": [H5 for _ in range(n_agents // 2)]
             }
         }
     
@@ -96,13 +103,12 @@ def _game_loop(env, render, debug, team):
     if render:
         
         env.render()
-        if(debug):
+        if debug:
             input()
         else:
             time.sleep(SLEEP_TIME)
 
     while not done:
-
 
         actions = [player.step(obs[i]) for i, player in enumerate(env.players)]
 
@@ -112,7 +118,7 @@ def _game_loop(env, render, debug, team):
 
         if render:
             env.render()
-            if(debug):
+            if debug:
                 input()
             else:
                 time.sleep(SLEEP_TIME)

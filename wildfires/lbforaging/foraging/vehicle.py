@@ -24,14 +24,14 @@ class Vehicle():
     
     def extinguish(self, fire_level):
         if (self.water - fire_level * 100 < 0):
-            extiguised_level = self.water // 100
+            extinguised_level = self.water // 100
             self.water = 0
-            return extiguised_level
+            return extinguised_level
         else:
             self.water -= fire_level * 100
             return fire_level     
 
-    def refill(self,amount=None):
+    def refill(self, amount=None):
         self.water = amount if amount else self.water_capacity
 
 
