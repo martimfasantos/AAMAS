@@ -94,13 +94,14 @@ class ForagingEnv(Env):
                   Action.EXTINGUISH, Action.TURN_RIGHT, Action.TURN_LEFT, Action.TURN_AROUND,Action.REFILL]
     Observation = namedtuple(
         "Observation",
-        ["field", "actions", "players", "game_over", "sight", "current_step","fires"],
+        ["field", "actions", "players", "game_over", "sight", "current_step", "fires", "water_sources"],
     )
     PlayerObservation = namedtuple(
         "PlayerObservation", ["position", "level", "history", "reward", "is_self"]
     )  # reward is available only if is_self
 
-    Fire = namedtuple("Fire", ["row","col", "level"])
+    Fire = namedtuple("Fire", ["row", "col", "level"])
+    WaterSource = namedtuple("WaterSource", ["row", "col", "level"])
 
     def __init__(
         self,
@@ -123,6 +124,7 @@ class ForagingEnv(Env):
         self.penalty = penalty
         
         self.max_fires = max_fires
+        self.max_water_sources = 1 # TODO: make this a parameter
         self._fires_spawned = 0.0
         self.max_player_level = MAX_PLAYER_LEVEL
         self.sight = sight
@@ -142,6 +144,7 @@ class ForagingEnv(Env):
         self.viewer = None
 
         self.fires = []
+        self.water_sources = []
 
         self.n_agents = len(self.players)
 
@@ -162,8 +165,9 @@ class ForagingEnv(Env):
             max_fires = self.max_fires
             max_fires_level = TILES_PER_FIRE * self.max_player_level * len(self.players)
 
-            min_obs = [-1, -1, 0] * max_fires + [-1, -1, 0] * len(self.players)
-            max_obs = [field_x-1, field_y-1, max_fires_level] * max_fires + [
+            min_obs = [-1, -1, 0] * max_fires + [-1, -1, -1] * self.max_water_sources + [-1, -1, 0] * len(self.players)
+            max_obs = [field_x-1, field_y-1, max_fires_level] * max_fires \
+                + [field_x-1, field_y-1, 0] * self.max_water_sources + [
                 field_x-1,
                 field_y-1,
                 self.max_player_level,
@@ -176,18 +180,22 @@ class ForagingEnv(Env):
             agents_min = np.zeros(grid_shape, dtype=np.float32)
             agents_max = np.ones(grid_shape, dtype=np.float32) * self.max_player_level
 
-            # foods layer: foods level
+            # fires layer: fires level
             max_fires_level = self.max_player_level * len(self.players)
             fires_min = np.zeros(grid_shape, dtype=np.float32)
             fires_max = np.ones(grid_shape, dtype=np.float32) * max_fires_level
+
+            # water sources layer: water source
+            water_min = np.ones(grid_shape, dtype=np.float32) * -1
+            water_max = np.zeros(grid_shape, dtype=np.float32)
 
             # access layer: i the cell available
             access_min = np.zeros(grid_shape, dtype=np.float32)
             access_max = np.ones(grid_shape, dtype=np.float32)
 
             # total layer
-            min_obs = np.stack([agents_min, fires_min, access_min])
-            max_obs = np.stack([agents_max, fires_max, access_max])
+            min_obs = np.stack([agents_min, fires_min, water_min, access_min])
+            max_obs = np.stack([agents_max, fires_max, water_max, access_max])
 
         return gym.spaces.Box(np.array(min_obs), np.array(max_obs), dtype=np.float32)
 
@@ -301,11 +309,11 @@ class ForagingEnv(Env):
                 weakest = self.field[row, col] if weaker else weakest
                 weakest_location = (row, col) if weaker else weakest_location
             if row >= 1 and self.field[row - 1, col] > 0:
-                weaker = self.field[row, col - 1] < weakest
+                weaker = self.field[row - 1, col] < weakest
                 weakest = self.field[row - 1, col] if weaker else weakest
                 weakest_location = (row - 1, col) if weaker else weakest_location
             if row <= self.rows - 1 and self.field[row + 1, col] > 0:
-                weaker = self.field[row, col - 1] < weakest
+                weaker = self.field[row + 1, col] < weakest
                 weakest = self.field[row + 1, col] if weaker else weakest
                 weakest_location = (row + 1, col) if weaker else weakest_location
             if col >= 1 and self.field[row, col - 1] > 0:
@@ -313,7 +321,7 @@ class ForagingEnv(Env):
                 weakest = self.field[row, col - 1] if weaker else weakest
                 weakest_location = (row, col - 1) if weaker else weakest_location
             if col <= self.cols - 1 and self.field[row, col + 1] > 0:
-                weaker = self.field[row, col - 1] < weakest
+                weaker = self.field[row, col + 1] < weakest
                 weakest = self.field[row, col + 1] if weaker else weakest
                 weakest_location = (row, col + 1) if weaker else weakest_location
             return weakest_location
@@ -384,6 +392,8 @@ class ForagingEnv(Env):
             
             water_sources += 1
             self.field[row, col] = -1
+            self.water_sources.append(self.WaterSource(row, col, self.field[row, col]))
+
 
     def _fill_adjacent_tiles(self, row, col, level):
         placed = 0
@@ -393,13 +403,10 @@ class ForagingEnv(Env):
             self.field[row-1, col] = np.random.randint(1, level+1)
             fires.append(self.Fire(row-1, col, self.field[row-1, col]))
             placed += 1
-
         elif (row + 1 < self.rows and self._is_empty_location(row+1, col)):
             self.field[row+1, col] = np.random.randint(1, level+1)
             fires.append(self.Fire(row+1, col, self.field[row+1, col]))
-        
             placed += 1
-
         if (col - 1 >= 0 and self._is_empty_location(row, col-1)):
             self.field[row, col-1] = np.random.randint(1, level+1)
             fires.append(self.Fire(row, col-1, self.field[row, col-1]))
@@ -408,7 +415,6 @@ class ForagingEnv(Env):
             self.field[row, col+1] = np.random.randint(1, level+1)
             fires.append(self.Fire(row, col+1, self.field[row, col+1]))
             placed += 1
-
         if (row - 1 >= 0 and col - 1 >=0 and self._is_empty_location(row-1, col-1)):
             self.field[row-1, col-1] = np.random.randint(1, level+1)
             fires.append(self.Fire(row-1, col-1, self.field[row-1, col-1]))
@@ -420,7 +426,7 @@ class ForagingEnv(Env):
 
         self.fires.append(fires)
         return placed
-
+    
     def _is_empty_location(self, row, col):
         if self.field[row, col] != 0:
             return False
@@ -537,16 +543,20 @@ class ForagingEnv(Env):
             sight=self.sight,
             current_step=self.current_step,
             fires=self._active_fires(),
+            water_sources=self._water_sources(),
         )
     
     def _active_fires(self):
         fires = []
         for group in self.fires:
-            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row,fire.col]) \
-                        for fire in group if self.field[fire.row,fire.col] > 0])
+            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
+                        for fire in group if self.field[fire.row, fire.col] > 0])
         self.fires = fires
         return self.fires
-
+    
+    def _water_sources(self):
+        self.water_sources = [self.WaterSource(row, col, -1) for row, col in zip(*np.where(self.field == -1))]
+        return self.water_sources
 
     def _make_gym_obs(self):
         def make_obs_array(observation):
@@ -567,15 +577,25 @@ class ForagingEnv(Env):
                 obs[3 * i + 1] = x
                 obs[3 * i + 2] = observation.field[y, x]
 
-            for i in range(len(self.players)):
+            for i in range(self.max_water_sources):
                 obs[self.max_fires * 3 + 3 * i] = -1
                 obs[self.max_fires * 3 + 3 * i + 1] = -1
-                obs[self.max_fires * 3 + 3 * i + 2] = 0
+                obs[self.max_fires * 3 + 3 * i + 2] = -1
+
+            for i, (y, x) in enumerate(zip(*np.where(observation.field == -1))):
+                obs[self.max_fires * 3 + 3 * i] = y
+                obs[self.max_fires * 3 + 3 * i + 1] = x
+                obs[self.max_fires * 3 + 3 * i + 2] = -1
+            
+            for i in range(len(self.players)):
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i] = -1
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i + 1] = -1
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i + 2] = 0
 
             for i, p in enumerate(seen_players):
-                obs[self.max_fires * 3 + 3 * i] = p.position[0]
-                obs[self.max_fires * 3 + 3 * i + 1] = p.position[1]
-                obs[self.max_fires * 3 + 3 * i + 2] = p.level
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i] = p.position[0]
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i + 1] = p.position[1]
+                obs[(self.max_fires + self.max_water_sources) * 3 + 3 * i + 2] = p.level
 
             return obs
 
@@ -596,6 +616,9 @@ class ForagingEnv(Env):
             fires_layer = np.zeros(grid_shape, dtype=np.float32)
             fires_layer[self.sight:-self.sight, self.sight:-self.sight] = self.field.copy()
 
+            waters_layer = np.zeros(grid_shape, dtype=np.float32)
+            waters_layer[self.sight:-self.sight, self.sight:-self.sight] = self.field.copy()
+
             access_layer = np.ones(grid_shape, dtype=np.float32)
             # out of bounds not accessible
             access_layer[:self.sight, :] = 0.0
@@ -607,11 +630,15 @@ class ForagingEnv(Env):
                 player_x, player_y = player.position
                 access_layer[player_x + self.sight, player_y + self.sight] = 0.0
             # fire locations are not accessible
-            fires_x, fires_y = self.field.nonzero()
+            fires_x, fires_y = self.field.nonzero() and self.field > 0
             for x, y in zip(fires_x, fires_y):
                 access_layer[x + self.sight, y + self.sight] = 0.0
+            # fire locations are not accessible
+            waters_x, waters_y = self.field == -1
+            for x, y in zip(waters_x, waters_y):
+                access_layer[x + self.sight, y + self.sight] = 0.0
             
-            return np.stack([agents_layer, fires_layer, access_layer])
+            return np.stack([agents_layer, fires_layer, waters_layer, access_layer])
 
         def get_agent_grid_bounds(agent_x, agent_y):
             return agent_x, agent_x + 2 * self.sight + 1, agent_y, agent_y + 2 * self.sight + 1
