@@ -10,6 +10,7 @@ from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
 from lbforaging.agents.heuristic_agent import H1, H2, H3, H4, H5
 from lbforaging.agents.role_agent import R1, R2, R3
 from lbforaging.agents import *
+from lbforaging.agents.social_convention_agent import C1, C2, C3
 import warnings
 from gym.envs.registration import register
 
@@ -77,12 +78,18 @@ def generateTeams(mode, n_agents):
         }
     elif mode == 7:
         return {
+            "Convention Agents": {
+                "Helicopters": [C2 for _ in range(n_agents // 2)],
+                "Firetrucks": [C2 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 8:
+        return {
             "Role Based Agents": {
                 "Helicopters": [R3 for _ in range(n_agents // 2)],
                 "Firetrucks": [R3 for _ in range(n_agents // 2)]
             }
         }
-    
     else:
         return {
             "Random Agents": {
