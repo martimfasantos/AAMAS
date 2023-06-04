@@ -63,7 +63,6 @@ class HeuristicAgent(Agent):
             r,c = self._closest_water_source(obs)
             self.target_fire = (r,c)
 
-
         if (abs(r - y) + abs(c - x)) == 1:
             self.target_fire = None
             return Action.REFILL

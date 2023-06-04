@@ -23,7 +23,7 @@ class Vehicle():
         return self.agent._step(obs)
     
     def extinguish(self, fire_level):
-        if (self.water - fire_level * 100 < 0):
+        if self.water - fire_level * 100 < 0:
             extinguised_level = self.water // 100
             self.water = 0
             return extinguised_level

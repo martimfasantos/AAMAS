@@ -8,6 +8,7 @@ from lbforaging.foraging.environment import TILES_PER_FIRE
 from lbforaging.agents.random_agent import RandomAgent
 from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
 from lbforaging.agents.heuristic_agent import H1, H2, H3, H4, H5
+from lbforaging.agents.role_agent import R1, R2, R3
 from lbforaging.agents import *
 import warnings
 from gym.envs.registration import register
@@ -72,6 +73,13 @@ def generateTeams(mode, n_agents):
             "Greedy H5 Agents": {
                 "Helicopters": [H5 for _ in range(n_agents // 2)],
                 "Firetrucks": [H5 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 7:
+        return {
+            "Role Based Agents": {
+                "Helicopters": [R3 for _ in range(n_agents // 2)],
+                "Firetrucks": [R3 for _ in range(n_agents // 2)]
             }
         }
     

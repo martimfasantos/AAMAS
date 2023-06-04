@@ -55,6 +55,27 @@ class Agent:
 
         return r[min_idx], c[min_idx]
     
+    def _order_closest_fires(self, obs, max_fire_level=None, start=None):
+
+        if start is None:
+            y,x = self.observed_position
+        else:
+            y,x = start
+
+        field = np.copy(obs.field)
+
+        if max_fire_level:
+            field[field > max_fire_level] = 0
+
+        r, c = np.where(field > 0)
+        try:
+            distances = abs(r - y) + abs(c - x)
+            indices = np.argsort(distances)
+        except ValueError:
+            return None
+
+        return r[indices], c[indices]        
+        
     def _strongest_front_closest_fire(self, obs, max_fire_level=None, start=None):
 
         def fire_fronts(field, y, x):

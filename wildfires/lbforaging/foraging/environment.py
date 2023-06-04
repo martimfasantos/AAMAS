@@ -461,7 +461,7 @@ class ForagingEnv(Env):
                         player.set_controller(Helicopter(agent(player)))
                     player.setup(
                         (row, col),
-                        player.controller.water_capacity // 100,
+                        player.controller.water // 100,
                         self.field_size,
                         n_placed_players
                     )
@@ -740,7 +740,7 @@ class ForagingEnv(Env):
                 turning_around_players.add(player)
             elif action == Action.REFILL:
                 player.controller.refill()
- 
+                player.level = player.controller.water // 100
 
         # and do movements for non colliding players
         for pos, players in collisions.items():
@@ -788,9 +788,10 @@ class ForagingEnv(Env):
             for a in adj_players:
                 a.reward = float(a.level * fire_level)
                 extinguished_level += a.controller.extinguish(fire_level)
+                a.level = a.controller.water // 100
                 if self._normalize_reward:
                     a.reward = a.reward / float(
-                        adj_player_level * self._fires_spawned
+                        sum(a.controller.water_capacity for a in adj_players) // 100 * self._fires_spawned
                     )  # normalize reward
             fire_level = max(0, fire_level - extinguished_level)
             # and the fire level is updated
