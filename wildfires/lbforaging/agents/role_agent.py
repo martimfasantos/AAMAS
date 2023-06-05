@@ -103,7 +103,6 @@ class RoleAgent(HeuristicAgent):
 
     def step(self, obs):
 
-
         self.role_assignment(obs)
         self.curr_role = RoleAgent.role_assignments[self.id]
             
@@ -122,7 +121,7 @@ class RoleAgent(HeuristicAgent):
 
         y, x = self.position
 
-        minDistance = float('inf')
+        min_distance = float('inf')
         target = (-1,-1)
 
         for fire in assigned_fire:
@@ -131,8 +130,8 @@ class RoleAgent(HeuristicAgent):
             if dist == 0 or dist == 1:
                 return Action.EXTINGUISH
             
-            if dist < minDistance:
-                minDistance = dist
+            if dist < min_distance:
+                min_distance = dist
                 target = (frow, fcol)
 
         return self._move_towards(target, obs.actions)
@@ -144,9 +143,9 @@ class R1(RoleAgent):
     The fire's roles prioritize the closest agents with the most remaining water
     """
 
-    def potential_function(self, agent,fire):
+    def potential_function(self, agent, fire):
         return self.controller.water \
-            -min([self.manhattan_distance(agent.position,(tile.row,tile.col)) for tile in fire])
+            -min([self.manhattan_distance(agent.position, (tile.row, tile.col)) for tile in fire])
 
         
 
@@ -158,7 +157,7 @@ class R2(RoleAgent):
     """
 
     def potential_function(self, agent, fire):
-        return -min([self.manhattan_distance(agent.position,(tile.row,tile.col)) for tile in fire])
+        return -min([self.manhattan_distance(agent.position, (tile.row, tile.col)) for tile in fire])
        
 
 

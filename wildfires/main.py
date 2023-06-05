@@ -7,6 +7,8 @@ import numpy as np
 import warnings
 from gym.envs.registration import register
 from utils import *
+from lbforaging.foraging.environment import TILES_PER_FIRE
+
 
 
 SLEEP_TIME = 0.5

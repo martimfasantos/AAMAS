@@ -1,15 +1,7 @@
 import math
-from typing import Optional, Sequence
-
 import numpy as np
 import matplotlib.pyplot as plt
-from lbforaging.foraging.environment import TILES_PER_FIRE
-from lbforaging.agents.random_agent import RandomAgent
-from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
-from lbforaging.agents.heuristic_agent import H1, H2, H3, H4, H5
-from lbforaging.agents.role_agent import R1, R2, R3
 from lbforaging.agents import *
-from lbforaging.agents.social_convention_agent import C1, C2, C3
 
 
 def generateTeams(mode, n_agents, compare=False):
@@ -69,9 +61,13 @@ def generateTeams(mode, n_agents, compare=False):
             }
         if mode == 3: # Role Based Comparison
             return {
-                "Role Based R3 Agents": {
-                    "Helicopters": [R3 for _ in range(n_agents // 2)],
-                    "Firetrucks": [R3 for _ in range(n_agents // 2)]
+                "Role Based R1 Agents": {
+                    "Helicopters": [R1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R1 for _ in range(n_agents // 2)]
+                },
+                "Role Based R2 Agents": {
+                    "Helicopters": [R2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R2 for _ in range(n_agents // 2)]
                 }
             }
         else:
@@ -85,8 +81,8 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [H3 for _ in range(n_agents // 2)]
                 },
                 "Role Based Agents": {
-                    "Helicopters": [R3 for _ in range(n_agents // 2)],
-                    "Firetrucks": [R3 for _ in range(n_agents // 2)]
+                    "Helicopters": [R1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R1 for _ in range(n_agents // 2)]
                 }
             }
 
