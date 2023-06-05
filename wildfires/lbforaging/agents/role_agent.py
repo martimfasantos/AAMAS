@@ -36,27 +36,56 @@ class RoleAgent(HeuristicAgent):
         agents_roles = np.zeros(len(obs.players),dtype=np.int32)
         assigned_water = np.zeros(len(obs.fires), dtype=np.int32)
 
-        # sort agent by level in descending order to improve efficiency
-        agent_ids = np.arange(len(obs.players))
-        agent_list = list(zip(agent_ids, obs.players))
-        sorted_agents = sorted(agent_list, key=lambda x: x[1].level, reverse=True)
-        fire_idx = 0
-
         # Assign roles based on potential values and available water
-        for id, agent in sorted_agents:
+        for id, agent in enumerate(obs.players):
             fire_id = np.argmax(potentials[:, id])
-            if potentials[fire_id, id] == -999: # roles cover all fires
-                fire_id = fire_idx
-                fire_idx = (fire_idx + 1) % len(obs.fires) # evenly distribute the remaining water among the fires
-            
             agents_roles[id] = fire_id
             assigned_water[fire_id] += obs.players[id].water_available // 100 # safeguards from the case where the agent has no water
+        
+        # get the fires that were assigned more water than needed
+        over_watered_fires = np.where(assigned_water > total_fire_levels)[0]
+        fire_idx = 0
+        while len(over_watered_fires) > 0:
+            fire_id = over_watered_fires[0]
+            over_watered_fires = np.delete(over_watered_fires, 0)
+            agents_assigned = np.where(agents_roles == fire_id)[0]
+            # sort the agents by their potential values (highest first)
+            agents_assigned = sorted(agents_assigned, key=lambda x: potentials[fire_id, x], reverse=True)
+            # find the agents that aren't needed for this fire (by summing their remaining water)
+            potentials[fire_id, :] = -999
 
+            for agent_id in self._find_unecessary_agents(obs, agents_assigned, total_fire_levels[fire_id]):
+                new_fire_id = np.argmax(potentials[:, agent_id])
+                if(potentials[new_fire_id, agent_id] == -999):
+                    # if all fires have sufficient water, evenly distribute the remaining agents
+                    new_fire_id = fire_idx
+                    fire_idx = (fire_idx + 1) % len(obs.fires)
+                else: 
+                    assigned_water[new_fire_id] += obs.players[agent_id].water_available // 100
+                    if(assigned_water[new_fire_id] > total_fire_levels[new_fire_id]):
+                        over_watered_fires = np.append(over_watered_fires, new_fire_id)
 
-            if assigned_water[fire_id] >= total_fire_levels[fire_id]:  # fire will be extinguished
-                potentials[fire_id, :] = -999
+                agents_roles[agent_id] = new_fire_id
 
+                
         return agents_roles
+    
+    def _find_unecessary_agents(self, obs, agents_assigned, max_fire_level):
+        """
+        Finds the agents that are not needed for a fire.
+        """
+        aditional_agents = []
+        water = 0
+        i = 0
+        for agent_id in agents_assigned:
+            if(water < max_fire_level):
+                aditional_agents.append(agent_id)
+                water += obs.players[agent_id].water_available // 100
+                i += 1
+            else:
+                break
+        return agents_assigned[i:]
+        
     
     @staticmethod
     def manhattan_distance(a, b):
