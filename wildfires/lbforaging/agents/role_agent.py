@@ -4,18 +4,17 @@ from .heuristic_agent import HeuristicAgent
 from ..foraging.environment import Action
 from ..foraging import FireTruck
 
+ROLE_ASSIGNMENT_PERIOD = 3
+
 class RoleAgent(HeuristicAgent):
     name = "Role Agent"
+    role_assignments = None
+    steps_counter = 0
+    role_assignment_period = None
 
     def __init__(self, player):
         super().__init__(player)
-        self.target_fire = None
-        self.target_water_source = None
-        self.role_assignment_period = 3 # TODO: review this OR make it a parameter
-        self.role_assignments = None
         self.curr_role = None
-        self.steps_counter = 0
-        self.fire_levels = {}
 
 
     def potential_function(self, agent, fire):
@@ -25,6 +24,17 @@ class RoleAgent(HeuristicAgent):
         raise NotImplemented("Potential Functions are implemented in the subclasses")
 
     def role_assignment(self, obs):
+
+        
+        if(RoleAgent.role_assignment_period is None):
+            RoleAgent.role_assignment_period = ROLE_ASSIGNMENT_PERIOD * len(obs.players)
+
+
+        RoleAgent.steps_counter += 1
+        if(not (RoleAgent.steps_counter % RoleAgent.role_assignment_period == 0 \
+                or RoleAgent.role_assignments is None)): # if it is not time to reassign roles just return
+            return
+
 
         potentials = np.zeros((len(obs.fires), len(obs.players)))
         total_fire_levels = [sum([fire.level for fire in fires]) for fires in obs.fires]
@@ -67,8 +77,7 @@ class RoleAgent(HeuristicAgent):
 
                 agents_roles[agent_id] = new_fire_id
 
-                
-        return agents_roles
+        RoleAgent.role_assignments = agents_roles
     
     def _find_unecessary_agents(self, obs, agents_assigned, max_fire_level):
         """
@@ -93,10 +102,10 @@ class RoleAgent(HeuristicAgent):
         
 
     def step(self, obs):
-        # assign the roles if it is time
-        if self.curr_role is None or self.steps_counter % self.role_assignment_period == 0:
-            self.role_assignments = self.role_assignment(obs)
-            self.curr_role = self.role_assignments[self.id]
+
+
+        self.role_assignment(obs)
+        self.curr_role = RoleAgent.role_assignments[self.id]
             
         self.steps_counter += 1
 
