@@ -64,6 +64,7 @@ class Player:
         self.level = level
         self.field_size = field_size
         self.score = 0
+        self.id = id
 
     def set_controller(self, controller):
         self.controller = controller
@@ -271,11 +272,11 @@ class ForagingEnv(Env):
                 return row, col
             if row >= 1 and self.field[row - 1, col] > 0:
                 return row - 1, col
-            elif row <= self.rows - 1 and self.field[row + 1, col] > 0:
+            elif row < self.rows - 1 and self.field[row + 1, col] > 0:
                 return row + 1, col
             elif col >= 1 and self.field[row, col - 1] > 0:
                 return row, col - 1
-            elif col <= self.cols - 1 and self.field[row, col + 1] > 0:
+            elif col < self.cols - 1 and self.field[row, col + 1] > 0:
                 return row, col + 1
         elif mode == ExtinguishingMode.STRONGEST:
             strongest = -1
@@ -549,8 +550,11 @@ class ForagingEnv(Env):
     def _active_fires(self):
         fires = []
         for group in self.fires:
-            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
-                        for fire in group if self.field[fire.row, fire.col] > 0])
+            fireGroup = [self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
+                        for fire in group if self.field[fire.row, fire.col] > 0]
+            if(len(fireGroup) > 0):
+                fires.append(fireGroup)
+            
         self.fires = fires
         return self.fires
     

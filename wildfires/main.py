@@ -5,12 +5,7 @@ import time
 import gym
 import numpy as np
 from lbforaging.foraging.environment import TILES_PER_FIRE
-from lbforaging.agents.random_agent import RandomAgent
-from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
-from lbforaging.agents.heuristic_agent import H1, H2, H3, H4, H5
-from lbforaging.agents.role_agent import R1, R2, R3
 from lbforaging.agents import *
-from lbforaging.agents.social_convention_agent import C1, C2, C3
 import warnings
 from gym.envs.registration import register
 
@@ -78,16 +73,37 @@ def generateTeams(mode, n_agents):
         }
     elif mode == 7:
         return {
-            "Convention Agents": {
-                "Helicopters": [C2 for _ in range(n_agents // 2)],
-                "Firetrucks": [C2 for _ in range(n_agents // 2)]
+            "Convention Agents (C1)": {
+                "Helicopters": [C1 for _ in range(n_agents // 2)],
+                "Firetrucks": [C1 for _ in range(n_agents // 2)]
             }
         }
     elif mode == 8:
         return {
-            "Role Based Agents": {
-                "Helicopters": [R3 for _ in range(n_agents // 2)],
-                "Firetrucks": [R3 for _ in range(n_agents // 2)]
+            "Convention Agents (C2)": {
+                "Helicopters": [C2 for _ in range(n_agents // 2)],
+                "Firetrucks": [C2 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 9:
+        return {
+            "Convention Agents (C3)": {
+                "Helicopters": [C3 for _ in range(n_agents // 2)],
+                "Firetrucks": [C3 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 10:
+        return {
+            "Role Based Agents (R1)": {
+                "Helicopters": [R1 for _ in range(n_agents // 2)],
+                "Firetrucks": [R1 for _ in range(n_agents // 2)]
+            }
+        }
+    elif mode == 11:
+        return {
+            "Role Based Agents (R2)": {
+                "Helicopters": [R2 for _ in range(n_agents // 2)],
+                "Firetrucks": [R2 for _ in range(n_agents // 2)]
             }
         }
     else:
@@ -184,8 +200,20 @@ if __name__ == "__main__":
     parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
 
     parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
-    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t0 - Randomly\n\t1 - \
-                        Pseudo-randomly\n\t2 - Greedy Heuristic 1\n\t3 - Greedy Heuristic2\n\t4 - Self defined teams")
+    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t\
+                        0 - Randomly\n\t\
+                        1 - Pseudo-randomly\n\t\
+                        2 - Greedy Heuristic 1\n\t\
+                        3 - Greedy Heuristic 2\n\t\
+                        4 - Greedy Heuristic 3\n\t\
+                        5 - Greedy Heuristic 4\n\t\
+                        6 - Greedy Heuristic 5\n\t\
+                        7 - Social Conventions 1\n\t\
+                        8 - Social Conventions 2\n\t\
+                        9 - Social Conventions 3\n\t\
+                        10 - Role Based 1\n\t\
+                        11 - Role Based 2\n\t\
+                        12 - Self defined teams")
 
     args = parser.parse_args()
     main(args.times, args.render, args.fires, args.n_agents, args.mode, args.debug,args.max_steps)
