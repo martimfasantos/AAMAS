@@ -101,7 +101,8 @@ class H1(HeuristicAgent):
                 r,c = res
                 self.target_fire = (r,c)
 
-            if (abs(r - y) + abs(c - x)) == 1:
+            dist = (abs(r - y) + abs(c - x))
+            if dist == 0 or dist == 1:
                 self.target_fire = None
                 return Action.EXTINGUISH
             else:
@@ -135,8 +136,8 @@ class H2(HeuristicAgent):
                 r,c = res
                 self.target_fire = (r,c)
 
-            dis = (abs(r - y) + abs(c - x))
-            if dis == 0 or dis == 1:
+            dist = (abs(r - y) + abs(c - x))
+            if dist == 0 or dist == 1:
                 self.target_fire = None
                 return Action.EXTINGUISH
             else:
@@ -173,7 +174,8 @@ class H3(HeuristicAgent):
                 r,c = res
                 self.target_fire = (r,c)
 
-            if (abs(r - y) + abs(c - x)) == 1:
+            dist = (abs(r - y) + abs(c - x))
+            if dist == 0 or dist == 1:
                 self.target_fire = None
                 return Action.EXTINGUISH
             else:
