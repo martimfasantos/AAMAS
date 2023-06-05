@@ -33,19 +33,24 @@ class RoleAgent(HeuristicAgent):
             for j, agent in enumerate(obs.players):
                 potentials[i, j] = self.potential_function(agent, fire)
 
-        agents_roles = np.zeros(len(obs.players), dtype=np.int32)
+        agents_roles = np.zeros(len(obs.players),dtype=np.int32)
         assigned_water = np.zeros(len(obs.fires), dtype=np.int32)
 
         # sort agent by level in descending order to improve efficiency
         agent_ids = np.arange(len(obs.players))
         agent_list = list(zip(agent_ids, obs.players))
         sorted_agents = sorted(agent_list, key=lambda x: x[1].level, reverse=True)
+        fire_idx = 0
 
         # Assign roles based on potential values and available water
         for id, agent in sorted_agents:
             fire_id = np.argmax(potentials[:, id])
+            if potentials[fire_id, id] == -999: # roles cover all fires
+                fire_id = fire_idx
+                fire_idx = (fire_idx + 1) % len(obs.fires) # evenly distribute the remaining water among the fires
+            
             agents_roles[id] = fire_id
-            assigned_water[fire_id] += obs.players[id].level
+            assigned_water[fire_id] += obs.players[id].water_available // 100 # safeguards from the case where the agent has no water
 
 
             if assigned_water[fire_id] >= total_fire_levels[fire_id]:  # fire will be extinguished
@@ -63,14 +68,14 @@ class RoleAgent(HeuristicAgent):
         if self.curr_role is None or self.steps_counter % self.role_assignment_period == 0:
             self.role_assignments = self.role_assignment(obs)
             self.curr_role = self.role_assignments[self.id]
-        
+            
         self.steps_counter += 1
 
         if self.water == 0:
             return self._refill_water(obs)
         else:
             try:
-                assigned_fire = obs.fires[self.role_assignments[self.id]]
+                assigned_fire = obs.fires[self.curr_role]
             except IndexError:
                 return Action.NONE
 

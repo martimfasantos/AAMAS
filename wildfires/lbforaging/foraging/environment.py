@@ -98,7 +98,7 @@ class ForagingEnv(Env):
         ["field", "actions", "players", "game_over", "sight", "current_step", "fires", "water_sources"],
     )
     PlayerObservation = namedtuple(
-        "PlayerObservation", ["position", "level", "history", "reward", "is_self"]
+        "PlayerObservation", ["position", "level", "history", "reward", "is_self","water_available"]
     )  # reward is available only if is_self
 
     Fire = namedtuple("Fire", ["row", "col", "level"])
@@ -521,6 +521,7 @@ class ForagingEnv(Env):
                     is_self=a == player,
                     history=a.history,
                     reward=a.reward if a == player else None,
+                    water_available=a.controller.water,
                 )
                 for a in self.players
                 if (
