@@ -1,8 +1,9 @@
 from lbforaging.agents.agent import Agent
 from lbforaging.agents.random_agent import RandomAgent
-from lbforaging.agents.heuristic_agent import H1, H2,H3,H4
+from lbforaging.agents.heuristic_agent import H1, H2,H3,H4,H5
 from lbforaging.agents.pseudo_random_agent import PseudoRandomAgent
-from lbforaging.agents.role_agent import R1,R2,R3
+from lbforaging.agents.role_agent import R1,R2
+from lbforaging.agents.social_convention_agent import C1,C2,C3
 # from lbforaging.agents.q_agent import QAgent
 # from lbforaging.agents.monte_carlo import MonteCarloAgent
 # from lbforaging.agents.hba import HBAAgent

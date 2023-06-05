@@ -113,8 +113,20 @@ if __name__ == "__main__":
 
     parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
     parser.add_argument("--compare", default=False, action="store_true", help="Plot graphs to compare teams")
-    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t0 - Randomly\n\t1 - \
-                        Pseudo-randomly\n\t2 - Greedy Heuristic 1\n\t3 - Greedy Heuristic2\n\t4 - Self defined teams")
+    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t\
+                        0 - Randomly\n\t\
+                        1 - Pseudo-randomly\n\t\
+                        2 - Greedy Heuristic 1\n\t\
+                        3 - Greedy Heuristic 2\n\t\
+                        4 - Greedy Heuristic 3\n\t\
+                        5 - Greedy Heuristic 4\n\t\
+                        6 - Greedy Heuristic 5\n\t\
+                        7 - Social Conventions 1\n\t\
+                        8 - Social Conventions 2\n\t\
+                        9 - Social Conventions 3\n\t\
+                        10 - Role Based 1\n\t\
+                        11 - Role Based 2\n\t\
+                        12 - Self defined teams")
 
     args = parser.parse_args()
     main(args.times, args.render, args.fires, args.steps_incr, args.n_agents, args.compare, args.mode, args.debug, args.max_steps)

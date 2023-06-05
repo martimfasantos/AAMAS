@@ -143,16 +143,37 @@ def generateTeams(mode, n_agents, compare=False):
             }
         elif mode == 7:
             return {
-                "Convention Agents": {
-                    "Helicopters": [C2 for _ in range(n_agents // 2)],
-                    "Firetrucks": [C2 for _ in range(n_agents // 2)]
+                "Convention C1 Agents": {
+                    "Helicopters": [C1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C1 for _ in range(n_agents // 2)]
                 }
             }
         elif mode == 8:
             return {
-                "Role Based Agents": {
-                    "Helicopters": [R3 for _ in range(n_agents // 2)],
-                    "Firetrucks": [R3 for _ in range(n_agents // 2)]
+                "Convention C2 Agents": {
+                    "Helicopters": [C2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C2 for _ in range(n_agents // 2)]
+                }
+            }
+        elif mode == 9:
+            return {
+                "Convention C3 Agents": {
+                    "Helicopters": [C3 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C3 for _ in range(n_agents // 2)]
+                }
+            }
+        elif mode == 10:
+            return {
+                "Role Based R1 Agents": {
+                    "Helicopters": [R1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R1 for _ in range(n_agents // 2)]
+                }
+            }
+        elif mode == 11:
+            return {
+                "Role Based R2 Agents": {
+                    "Helicopters": [R2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R2 for _ in range(n_agents // 2)]
                 }
             }
         else:

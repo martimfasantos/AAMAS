@@ -64,6 +64,7 @@ class Player:
         self.level = level
         self.field_size = field_size
         self.score = 0
+        self.id = id
 
     def set_controller(self, controller):
         self.controller = controller
@@ -97,7 +98,7 @@ class ForagingEnv(Env):
         ["field", "actions", "players", "game_over", "sight", "current_step", "fires", "water_sources"],
     )
     PlayerObservation = namedtuple(
-        "PlayerObservation", ["position", "level", "history", "reward", "is_self"]
+        "PlayerObservation", ["position", "level", "history", "reward", "is_self","water_available"]
     )  # reward is available only if is_self
 
     Fire = namedtuple("Fire", ["row", "col", "level"])
@@ -522,6 +523,7 @@ class ForagingEnv(Env):
                     is_self=a == player,
                     history=a.history,
                     reward=a.reward if a == player else None,
+                    water_available=a.controller.water,
                 )
                 for a in self.players
                 if (
@@ -551,8 +553,10 @@ class ForagingEnv(Env):
     def _active_fires(self):
         fires = []
         for group in self.fires:
-            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) 
-                          for fire in group if self.field[fire.row, fire.col] > 0])
+            fire_group = [self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
+                        for fire in group if self.field[fire.row, fire.col] > 0]
+            if(len(fire_group) > 0):
+                fires.append(fire_group)
         self.fires = fires
         return self.fires
     
@@ -561,8 +565,8 @@ class ForagingEnv(Env):
         return self.water_sources
     
     def _increment_fires(self):
-        for group in self._active_fires():
-            for fire in group:
+        for fire_group in self._active_fires():
+            for fire in fire_group:
                 new_fire_level = min(fire.level + 1, MAX_FIRE_LEVEL)
                 fire = fire._replace(level = new_fire_level)
                 self.field[fire.row, fire.col] = new_fire_level
