@@ -679,6 +679,10 @@ class ForagingEnv(Env):
         return observations, nreward, ndone, ninfo
 
     def reset(self, **kwargs):
+
+        seed = kwargs.get('seed', None)
+        self.seed(seed)
+
         self.field = np.zeros(self.field_size, np.int32)
         self.spawn_players(self.max_player_level, kwargs['team'])
         # player_levels = sorted([player.level for player in self.players])
