@@ -2,6 +2,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from lbforaging.agents import *
+from lbforaging.agents.role_agent import R3
 
 
 def generateTeams(mode, n_agents, compare=False):
@@ -68,6 +69,10 @@ def generateTeams(mode, n_agents, compare=False):
                 "Role Based R2 Agents": {
                     "Helicopters": [R2 for _ in range(n_agents // 2)],
                     "Firetrucks": [R2 for _ in range(n_agents // 2)]
+                },
+                "Role Based R3 Agents": {
+                    "Helicopters": [R3 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R3 for _ in range(n_agents // 2)]
                 }
             }
         else:

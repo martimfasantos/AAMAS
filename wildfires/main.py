@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
     parser.add_argument("--compare", default=False, action="store_true", help="Plot graphs to compare teams")
     parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t\
+                        DEFAULT:\n\t\
                         0 - Randomly\n\t\
                         1 - Pseudo-randomly\n\t\
                         2 - Greedy Heuristic 1\n\t\
@@ -128,7 +129,13 @@ if __name__ == "__main__":
                         9 - Social Conventions 3\n\t\
                         10 - Role Based 1\n\t\
                         11 - Role Based 2\n\t\
-                        12 - Self defined teams")
+                        12 - Self defined teams\n\t\
+                        COMPARISON MODE:\n\t\
+                        1 - Random vs Pseudo-random\n\t\
+                        2 - Greedy Heuristics\n\t\
+                        3 - Social Conventions\n\t\
+                        4 - Role Based"
+                        )
 
     args = parser.parse_args()
     main(args.times, args.render, args.fires, args.steps_incr, args.n_agents, args.compare, args.mode, args.debug, args.max_steps)

@@ -6,7 +6,6 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-import random
 from .vehicle import FireTruck, Helicopter
 
 TILES_PER_FIRE = 4
@@ -59,12 +58,12 @@ class Player:
         self.extinguishing_mode = ExtinguishingMode.ANY
 
     def setup(self, position, level, field_size, id):
-        self.history = []
+        self.id = id
         self.position = position
         self.level = level
         self.field_size = field_size
+        self.history = []
         self.score = 0
-        self.id = id
 
     def set_controller(self, controller):
         self.controller = controller
@@ -98,7 +97,7 @@ class ForagingEnv(Env):
         ["field", "actions", "players", "game_over", "sight", "current_step", "fires", "water_sources"],
     )
     PlayerObservation = namedtuple(
-        "PlayerObservation", ["position", "level", "history", "reward", "is_self","water_available"]
+        "PlayerObservation", ["position", "level", "history", "reward", "is_self"]
     )  # reward is available only if is_self
 
     Fire = namedtuple("Fire", ["row", "col", "level"])
@@ -519,11 +518,10 @@ class ForagingEnv(Env):
                     position=self._transform_to_neighborhood(
                         player.position, self.sight, a.position
                     ),
-                    level=a.level,
+                    level=a.controller.water // 100,
                     is_self=a == player,
                     history=a.history,
                     reward=a.reward if a == player else None,
-                    water_available=a.controller.water,
                 )
                 for a in self.players
                 if (
