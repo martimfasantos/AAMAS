@@ -52,14 +52,17 @@ def _game_loop(env, render, debug, team, seed=None):
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
 
-def main(game_count, render, fires, steps_incr, n_agents, compare, mode, debug, max_steps, size=16, c=False):
-    seed = None
+def main(game_count, render, fires, steps_incr, n_agents, compare, seed, mode, debug, max_steps, size=16, c=False):
     if compare:
         teams = generateTeams(mode, n_agents, compare=True)
-        seed = randint(0, 1000000)
     else:
         teams = generateTeams(mode, n_agents)
 
+    if seed:
+        seed = randint(0, 1000000)
+        print(f"Using seed: {seed}")
+    else:
+        seed = None
     results = {}
 
     for name, team in teams.items():
@@ -86,7 +89,7 @@ def main(game_count, render, fires, steps_incr, n_agents, compare, mode, debug, 
         results[name] = np.zeros(game_count)
 
         for episode in range(game_count):
-            _game_loop(env, render, debug, team,seed)
+            _game_loop(env, render, debug, team, seed)
             print(f"Episode {episode+1} of {game_count} finished with {env.current_step} steps.")
             results[name][episode] = env.current_step
 
@@ -117,6 +120,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
     parser.add_argument("--compare", default=False, action="store_true", help="Plot graphs to compare teams")
+    parser.add_argument("--seed", default=False, action="store_true", help="Use a seed for the environment")
     parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t\
                         DEFAULT:\n\t\
                         0 - Randomly\n\t\
@@ -140,5 +144,5 @@ if __name__ == "__main__":
                         )
 
     args = parser.parse_args()
-    main(args.times, args.render, args.fires, args.steps_incr, args.n_agents, args.compare, args.mode, args.debug, args.max_steps)
+    main(args.times, args.render, args.fires, args.steps_incr, args.n_agents, args.compare, args.seed, args.mode, args.debug, args.max_steps)
 
