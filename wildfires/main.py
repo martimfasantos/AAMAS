@@ -5,6 +5,7 @@ import time
 import gym
 import numpy as np
 import warnings
+from random import randint
 from gym.envs.registration import register
 from utils import *
 from lbforaging.foraging.environment import TILES_PER_FIRE
@@ -19,12 +20,12 @@ logger.propagate = False
 warnings.filterwarnings("ignore")
        
 
-def _game_loop(env, render, debug, team):
+def _game_loop(env, render, debug, team, seed=None):
     """
     """
-    obs,_ = env.reset(team=team)
-    done = False
+    obs,_ = env.reset(team=team,seed=seed)
 
+    done = False
     if render:
         
         env.render()
@@ -52,9 +53,10 @@ def _game_loop(env, render, debug, team):
 logger = logging.getLogger(__name__)
 
 def main(game_count, render, fires, steps_incr, n_agents, compare, mode, debug, max_steps, size=16, c=False):
-    
+    seed = None
     if compare:
         teams = generateTeams(mode, n_agents, compare=True)
+        seed = randint(0, 1000000)
     else:
         teams = generateTeams(mode, n_agents)
 
@@ -84,7 +86,7 @@ def main(game_count, render, fires, steps_incr, n_agents, compare, mode, debug, 
         results[name] = np.zeros(game_count)
 
         for episode in range(game_count):
-            _game_loop(env, render, debug, team)
+            _game_loop(env, render, debug, team,seed)
             print(f"Episode {episode+1} of {game_count} finished with {env.current_step} steps.")
             results[name][episode] = env.current_step
 
