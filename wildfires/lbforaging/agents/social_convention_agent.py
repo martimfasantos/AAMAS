@@ -23,12 +23,12 @@ class ConventionAgent(HeuristicAgent):
         print(fires_convention)
         print("\n")
 
-        if(self.water == 0 or agent_id not in agents_convention):
+        if(self.water == 0 or self.id not in agents_convention):
             return self._refill_water(obs)
 
         # get agent's assigned fire
         agent_order = list(agents_convention).index(self.id)
-        
+
         if (agent_order >= len(fires_convention)):
             return Action.NONE
         
