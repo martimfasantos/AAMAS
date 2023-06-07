@@ -18,7 +18,6 @@ class ConventionAgent(HeuristicAgent):
     def step(self, obs):
         # get conventions
         agents_convention, fires_convention = self.social_conventions(obs)
-        agent_id = self.get_agent_id(agents_convention)
 
         print([[x[0], x[1].controller.water] for x in agents_convention.items()])
         print(fires_convention)
@@ -28,7 +27,8 @@ class ConventionAgent(HeuristicAgent):
             return self._refill_water(obs)
 
         # get agent's assigned fire
-        agent_order = list(agents_convention).index(agent_id)
+        agent_order = list(agents_convention).index(self.id)
+        
         if (agent_order >= len(fires_convention)):
             return Action.NONE
         
@@ -40,13 +40,7 @@ class ConventionAgent(HeuristicAgent):
             if abs(frow - y) + abs(fcol - x) == 1:
                 return Action.EXTINGUISH                
                
-            return self._move_towards((frow, fcol), obs.actions)
-
-    def get_agent_id(self, agents_dict):
-        for key,val in agents_dict.items():
-            if (val.is_self):
-                return key
-        
+            return self._move_towards((frow, fcol), obs.actions)     
 
 
 class C1(ConventionAgent):

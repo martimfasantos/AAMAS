@@ -6,7 +6,6 @@ from gym import Env
 import gym
 from gym.utils import seeding
 import numpy as np
-import random
 from .vehicle import FireTruck, Helicopter
 
 TILES_PER_FIRE = 4
@@ -45,6 +44,7 @@ class CellEntity(Enum):
 
 class Player:
     def __init__(self):
+        self.id = None
         self.controller = None
         self.position = None
         self.level = None
@@ -56,13 +56,13 @@ class Player:
         self.orietation = 0
         self.direction = Action.NORTH
         self.extinguishing_mode = ExtinguishingMode.ANY
-        self.id = None
 
-    def setup(self, position, level, field_size,id):
-        self.history = []
+    def setup(self, position, level, field_size, id):
+        self.id = id
         self.position = position
         self.level = level
         self.field_size = field_size
+        self.history = []
         self.score = 0
 
     def set_controller(self, controller):
@@ -108,6 +108,7 @@ class ForagingEnv(Env):
         players,
         field_size,
         max_fires,
+        steps_incr,
         sight,
         max_episode_steps,
         force_coop,
@@ -124,6 +125,7 @@ class ForagingEnv(Env):
         self.penalty = penalty
         
         self.max_fires = max_fires
+        self.steps_incr = steps_incr
         self.max_water_sources = 1 # TODO: make this a parameter
         self._fires_spawned = 0.0
         self.max_player_level = MAX_PLAYER_LEVEL
@@ -269,13 +271,13 @@ class ForagingEnv(Env):
         if mode == ExtinguishingMode.ANY:
             if self.field[row, col] > 0:
                 return row, col
-            if row >= 1 and self.field[row - 1, col] > 0:
+            if row > 0 and self.field[row - 1, col] > 0:
                 return row - 1, col
-            elif row <= self.rows - 1 and self.field[row + 1, col] > 0:
+            elif row < self.rows - 1 and self.field[row + 1, col] > 0:
                 return row + 1, col
-            elif col >= 1 and self.field[row, col - 1] > 0:
+            elif col > 0 and self.field[row, col - 1] > 0:
                 return row, col - 1
-            elif col <= self.cols - 1 and self.field[row, col + 1] > 0:
+            elif col < self.cols - 1 and self.field[row, col + 1] > 0:
                 return row, col + 1
         elif mode == ExtinguishingMode.STRONGEST:
             strongest = -1
@@ -284,19 +286,19 @@ class ForagingEnv(Env):
                 stronger = self.field[row, col] > strongest
                 strongest = self.field[row, col] if stronger else strongest
                 strongest_location = (row, col) if stronger else strongest_location
-            if row >= 1 and self.field[row - 1, col] > 0:
+            if row > 0 and self.field[row - 1, col] > 0:
                 stronger = self.field[row - 1, col] > strongest
                 strongest = self.field[row - 1, col] if stronger else strongest
                 strongest_location = (row - 1, col) if stronger else strongest_location
-            if row <= self.rows - 1 and self.field[row + 1, col] > 0:
+            if row < self.rows - 1 and self.field[row + 1, col] > 0:
                 stronger = self.field[row + 1, col] > strongest
                 strongest = self.field[row + 1, col] if stronger else strongest
                 strongest_location = (row + 1, col) if stronger else strongest_location
-            if col >= 1 and self.field[row, col - 1] > 0:
+            if col > 0 and self.field[row, col - 1] > 0:
                 stronger = self.field[row, col - 1] > strongest
                 strongest = self.field[row, col - 1] if stronger else strongest
                 strongest_location = (row, col - 1) if stronger else strongest_location
-            if col <= self.cols - 1 and self.field[row, col + 1] > 0:
+            if col < self.cols - 1 and self.field[row, col + 1] > 0:
                 stronger = self.field[row, col + 1] > strongest
                 strongest = self.field[row, col + 1] if stronger else strongest
                 strongest_location = (row, col + 1) if stronger else strongest_location
@@ -308,19 +310,19 @@ class ForagingEnv(Env):
                 weaker = self.field[row, col] < weakest
                 weakest = self.field[row, col] if weaker else weakest
                 weakest_location = (row, col) if weaker else weakest_location
-            if row >= 1 and self.field[row - 1, col] > 0:
+            if row > 0 and self.field[row - 1, col] > 0:
                 weaker = self.field[row - 1, col] < weakest
                 weakest = self.field[row - 1, col] if weaker else weakest
                 weakest_location = (row - 1, col) if weaker else weakest_location
-            if row <= self.rows - 1 and self.field[row + 1, col] > 0:
+            if row < self.rows - 1 and self.field[row + 1, col] > 0:
                 weaker = self.field[row + 1, col] < weakest
                 weakest = self.field[row + 1, col] if weaker else weakest
                 weakest_location = (row + 1, col) if weaker else weakest_location
-            if col >= 1 and self.field[row, col - 1] > 0:
+            if col > 0 and self.field[row, col - 1] > 0:
                 weaker = self.field[row, col - 1] < weakest
                 weakest = self.field[row, col - 1] if weaker else weakest
                 weakest_location = (row, col - 1) if weaker else weakest_location
-            if col <= self.cols - 1 and self.field[row, col + 1] > 0:
+            if col < self.cols - 1 and self.field[row, col + 1] > 0:
                 weaker = self.field[row, col + 1] < weakest
                 weakest = self.field[row, col + 1] if weaker else weakest
                 weakest_location = (row, col + 1) if weaker else weakest_location
@@ -461,7 +463,7 @@ class ForagingEnv(Env):
                         player.set_controller(Helicopter(agent(player)))
                     player.setup(
                         (row, col),
-                        player.controller.water_capacity // 100,
+                        player.controller.water // 100,
                         self.field_size,
                         n_placed_players
                     )
@@ -516,7 +518,7 @@ class ForagingEnv(Env):
                     position=self._transform_to_neighborhood(
                         player.position, self.sight, a.position
                     ),
-                    level=a.level,
+                    level=a.controller.water // 100,
                     is_self=a == player,
                     history=a.history,
                     reward=a.reward if a == player else None,
@@ -549,14 +551,23 @@ class ForagingEnv(Env):
     def _active_fires(self):
         fires = []
         for group in self.fires:
-            fires.append([self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
-                        for fire in group if self.field[fire.row, fire.col] > 0])
+            fire_group = [self.Fire(fire.row, fire.col, self.field[fire.row, fire.col]) \
+                        for fire in group if self.field[fire.row, fire.col] > 0]
+            if(len(fire_group) > 0):
+                fires.append(fire_group)
         self.fires = fires
         return self.fires
     
     def _water_sources(self):
         self.water_sources = [self.WaterSource(row, col, -1) for row, col in zip(*np.where(self.field == -1))]
         return self.water_sources
+    
+    def _increment_fires(self):
+        for fire_group in self._active_fires():
+            for fire in fire_group:
+                new_fire_level = min(fire.level + 1, MAX_FIRE_LEVEL)
+                fire = fire._replace(level = new_fire_level)
+                self.field[fire.row, fire.col] = new_fire_level
 
     def _make_gym_obs(self):
         def make_obs_array(observation):
@@ -668,6 +679,10 @@ class ForagingEnv(Env):
         return observations, nreward, ndone, ninfo
 
     def reset(self, **kwargs):
+
+        seed = kwargs.get('seed', None)
+        self.seed(seed)
+
         self.field = np.zeros(self.field_size, np.int32)
         self.spawn_players(self.max_player_level, kwargs['team'])
         # player_levels = sorted([player.level for player in self.players])
@@ -740,7 +755,7 @@ class ForagingEnv(Env):
                 turning_around_players.add(player)
             elif action == Action.REFILL:
                 player.controller.refill()
- 
+                player.level = player.controller.water // 100
 
         # and do movements for non colliding players
         for pos, players in collisions.items():
@@ -765,6 +780,10 @@ class ForagingEnv(Env):
             frow, fcol = res
             fire_level = self.field[frow, fcol]
 
+            # target fire is already extinguished
+            if fire_level == 0:
+                continue
+
             # adjacent players to the fire
             adj_players = self.adjacent_players(frow, fcol)
             adj_players = [
@@ -784,23 +803,30 @@ class ForagingEnv(Env):
                     a.reward -= self.penalty
 
             # else the fire is extinguised and each player scores points
-            extinguished_level = 0
             for a in adj_players:
                 a.reward = float(a.level * fire_level)
-                extinguished_level += a.controller.extinguish(fire_level)
+                # update player level
+                extinguished_level = a.controller.extinguish(fire_level)
+                a.level = a.controller.water // 100
+                # update fire level
+                fire_level = max(0, fire_level - extinguished_level)
+                self.field[frow, fcol] = fire_level
                 if self._normalize_reward:
                     a.reward = a.reward / float(
-                        adj_player_level * self._fires_spawned
+                        sum(a.controller.water_capacity for a in adj_players) // 100 * self._fires_spawned
                     )  # normalize reward
-            fire_level = max(0, fire_level - extinguished_level)
-            # and the fire level is updated
-            self.field[frow, fcol] = fire_level
+                if fire_level == 0:
+                    break
 
         field = np.copy(self.field)
         field[field == -1] = 0
         self._game_over = (
             field.sum() == 0 or self._max_episode_steps <= self.current_step
         )
+        # update fires
+        if self.steps_incr is not None and self.current_step % self.steps_incr == 0:
+            self._increment_fires()
+        
         self._gen_valid_moves()
 
         for p in self.players:
