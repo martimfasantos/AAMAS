@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lbforaging.agents import *
 from lbforaging.agents.role_agent import R3
+from lbforaging.agents.social_convention_agent import C4
 
 
 def generateTeams(mode, n_agents, compare=False):
@@ -165,12 +166,19 @@ def generateTeams(mode, n_agents, compare=False):
             }
         elif mode == 10:
             return {
+                "Convention C4 Agents": {
+                     "Helicopters": [C4 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C4 for _ in range(n_agents // 2)]
+                }
+            }
+        elif mode == 11:
+            return {
                 "Role Based R1 Agents": {
                     "Helicopters": [R1 for _ in range(n_agents // 2)],
                     "Firetrucks": [R1 for _ in range(n_agents - n_agents // 2)]
                 }
             }
-        elif mode == 11:
+        elif mode == 12:
             return {
                 "Role Based R2 Agents": {
                     "Helicopters": [R2 for _ in range(n_agents // 2)],
