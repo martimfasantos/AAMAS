@@ -71,7 +71,10 @@ class Player:
     def step(self, obs):
         return self.controller.step(obs)
     
-    def turn(self,angle):
+    def move(self, position):
+        self.position = position
+    
+    def turn(self, angle):
         self.orientation = (self.orientation + angle) % 360
         self.direction = Action(self.orientation // 90)
 
@@ -472,10 +475,11 @@ class ForagingEnv(Env):
                 attempts += 1
 
             
-    def _check_direction(self,action, player):
+    def _check_direction(self, action, player):
        return isinstance(player.controller, Helicopter) or \
-                (isinstance(player.controller, FireTruck) and action == player.direction)
-
+                isinstance(player.controller, FireTruck) and action == player.direction
+    
+    
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
             return True
@@ -760,7 +764,7 @@ class ForagingEnv(Env):
         # and do movements for non colliding players
         for pos, players in collisions.items():
             for player in players:
-                player.position = pos
+                player.move(pos)
                 # process turnings
                 if player in turning_right_players:
                     player.turn(90)
