@@ -38,8 +38,6 @@ class ConventionAgent(HeuristicAgent):
 
 
     def step(self, obs):
-        if (isinstance(self, C4)):
-            C4.step(obs)
 
         # compute conventions if not computed yet
         if (self.conventions == None):
