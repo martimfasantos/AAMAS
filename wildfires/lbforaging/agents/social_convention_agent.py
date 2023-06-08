@@ -54,7 +54,7 @@ class ConventionAgent(HeuristicAgent):
         fires_convention = [fire for fire in fires_convention if fire]
 
         # if water level is zero, refill
-        if(self.water == 0 or self.id not in agents_convention):
+        if (self.water == 0 or self.id not in agents_convention):
             return self._refill_water(obs)  
         
         if (self.old_target != None and self.old_assigned_fire != None):
@@ -82,12 +82,13 @@ class ConventionAgent(HeuristicAgent):
 
 
 class C1(ConventionAgent):
+    name = "C1"
+
     """
     The agents and fires are in descending order of level, so agents with greater level go to fires with greater level
     If there are more fires than agents, each agent get the fires with id = multiple of the agent's id
     If there are more agents than fires, each agent get the fire with id = len(fires) % agent_id
     """
-    name = "C1"
 
     def social_conventions(self, obs):
 
@@ -106,10 +107,11 @@ class C1(ConventionAgent):
 
 
 class C2(ConventionAgent):
+    name = "C2"
+
     """
     The agents and fires are ordered by id 
     """
-    name = "C2"
 
     def social_conventions(self, obs):
         fire_convention = [fire for fire in obs.fires ]
@@ -121,10 +123,11 @@ class C2(ConventionAgent):
     
 
 class C3(ConventionAgent):
+    name = "C3"
+
     """
     The agents are order by descending level and fires are ordered by ascending level
     """
-    name = "C3"
 
     def social_conventions(self, obs):
         # sort fires by ascending order of the sum of tiles level
@@ -142,11 +145,11 @@ class C3(ConventionAgent):
       
     
 class C4(ConventionAgent):
+    name = "C4"
+
     """
     The agents and fires are ordered by descending order of level, but the social convention is recalculated at each step
     """
-
-    name = "C4"
 
     def social_conventions(self, obs):
         # sort fires by descending order of the sum of tiles level
