@@ -26,15 +26,22 @@ class ConventionAgent(HeuristicAgent):
         all_fires_tiles = [[tile.row, tile.col] for fire in fires for tile in fire]
         return tile not in all_fires_tiles
     
-    def assign_another_fire_to_agent(self, fires_convention, agents_convention):
+    def get_agent_index_in_convention(self, agents_convention):
+        for index, agent in agents_convention.items():
+            if (agent.is_self):
+                return index
+    
+    def assign_fire_to_agent(self, fires_convention, agents_convention):
+        agent_index = self.get_agent_index_in_convention(agents_convention)
+
         if (len(fires_convention) >= len(agents_convention)):
-            agent_order = self.id
+            agent_order = agent_index
         else:
-            agent_order = self.id % len(fires_convention)
+            agent_order = agent_index % len(fires_convention)
 
         assigned_fire = fires_convention[agent_order]  
         self.old_assigned_fire = assigned_fire
-        self.old_target = assigned_fire[0]  
+        self.old_target = assigned_fire[0] 
 
 
     def step(self, obs):
@@ -54,7 +61,7 @@ class ConventionAgent(HeuristicAgent):
         fires_convention = [fire for fire in fires_convention if fire]
 
         # if water level is zero, refill
-        if(self.water == 0 or self.id not in agents_convention):
+        if(self.water == 0):
             return self._refill_water(obs)  
         
         if (self.old_target != None and self.old_assigned_fire != None):
@@ -68,9 +75,9 @@ class ConventionAgent(HeuristicAgent):
                     self.old_target = self.old_assigned_fire[0]
 
             else:
-                self.assign_another_fire_to_agent(fires_convention, agents_convention)
+                self.assign_fire_to_agent(fires_convention, agents_convention)
         else: 
-            self.assign_another_fire_to_agent(fires_convention, agents_convention)    
+            self.assign_fire_to_agent(fires_convention, agents_convention)    
            
         # if agent is close to fire extinguishes it
         y,x = self.observed_position
@@ -99,8 +106,8 @@ class C1(ConventionAgent):
 
         # sort agent by descending level
         agent_ids = np.arange(len(obs.players))
-        agent_dict = dict(zip(agent_ids, obs.players))
-        agent_convention = dict(sorted(agent_dict.items(), key=lambda x: x[1].level, reverse=True))
+        agent_sorted = sorted(obs.players, key=lambda x: x.level, reverse=True)
+        agent_convention = dict(zip(agent_ids, agent_sorted))
 
         return [agent_convention, fire_convention_grouped]
 
@@ -135,8 +142,8 @@ class C3(ConventionAgent):
 
         # sort agent by descending level
         agent_ids = np.arange(len(obs.players))
-        agent_dict = dict(zip(agent_ids, obs.players))
-        agent_convention = dict(sorted(agent_dict.items(), key=lambda x: x[1].level, reverse=True))
+        agent_sorted = sorted(obs.players, key=lambda x: x.level, reverse=True)
+        agent_convention = dict(zip(agent_ids, agent_sorted))
         
         return [agent_convention, fire_convention_grouped]  
       
@@ -157,8 +164,8 @@ class C4(ConventionAgent):
 
         # sort agent by descending level
         agent_ids = np.arange(len(obs.players))
-        agent_dict = dict(zip(agent_ids, obs.players))
-        agent_convention = dict(sorted(agent_dict.items(), key=lambda x: x[1].level, reverse=True))
+        agent_sorted = sorted(obs.players, key=lambda x: x.level, reverse=True)
+        agent_convention = dict(zip(agent_ids, agent_sorted))
 
         return [agent_convention, fire_convention_grouped]
     
@@ -170,10 +177,11 @@ class C4(ConventionAgent):
             return self._refill_water(obs)
 
         # get agent's assigned fire
+        agent_index = self.get_agent_index_in_convention(agents_convention)
         if (len(fires_convention) >= len(agents_convention)):
-            agent_order = self.id
+            agent_order = agent_index
         else:
-            agent_order = self.id % len(fires_convention)        
+            agent_order = agent_index % len(fires_convention)     
         assigned_fire = fires_convention[agent_order]  
 
         # if agent is close to fire extinguishes it
