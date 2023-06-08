@@ -98,7 +98,8 @@ class Viewer(object):
         self.img_apple = pyglet.resource.image("fire.png")
         self.img_heli = pyglet.resource.image("helicopter.png")
         self.water_source = pyglet.resource.image("water_source.png")
-        self.truckRotations = [pyglet.resource.image(f"firetruck{x}.png") for x in [0,90,180,270]]
+        self.truck_rotations = [pyglet.resource.image(f"firetruck{x}.png") 
+                                for x in [0, 90, 180, 270]]
 
 
     def close(self):
@@ -194,7 +195,7 @@ class Viewer(object):
         batch.draw()
 
         for row, col in idxes:
-            if(env.field[row,col] == -1):
+            if env.field[row,col] == -1:
                 continue
             self._draw_badge(row, col, env.field[row, col])
 
@@ -205,7 +206,7 @@ class Viewer(object):
         for player in env.players:
             row, col = player.position
             sprite = pyglet.sprite.Sprite(
-                    self._findCorrectImage(player),
+                    self._find_correct_image(player),
                     (self.grid_size + 1) * col,
                     self.height - (self.grid_size + 1) * (row + 1),
                     batch=batch,
@@ -217,15 +218,15 @@ class Viewer(object):
         for p in env.players:
             self._draw_badge(*p.position, p.controller.water)
     
-    def _findCorrectImage(self,player):
-        if(isinstance(player.controller,Helicopter)):
+    def _find_correct_image(self, player):
+        if isinstance(player.controller, Helicopter):
             return self.img_heli
-        elif(isinstance(player.controller,FireTruck)):
-            return self.truckRotations[player.orietation // 90]
+        elif isinstance(player.controller, FireTruck):
+            return self.truck_rotations[player.orientation // 90]
 
     def _draw_badge(self, row, col, level):
         resolution = 6
-        radius = self.grid_size / 5
+        radius = self.grid_size / 4
 
         badge_x = col * (self.grid_size + 1) + (3 / 4) * (self.grid_size + 1)
         badge_y = self.height - (self.grid_size + 1) * (row + 1) + (1 / 4) * (self.grid_size + 1)
