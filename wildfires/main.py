@@ -11,7 +11,6 @@ from utils import *
 from lbforaging.foraging.environment import TILES_PER_FIRE
 
 
-
 SLEEP_TIME = 0.5
 
 logger = logging.getLogger(__name__)
@@ -51,6 +50,7 @@ def _game_loop(env, render, debug, team, seed=None):
 
         done = np.all(ndone)
 logger = logging.getLogger(__name__)
+
 
 def main(game_count, render, fires, steps_incr, n_agents, compare, seed, mode, debug, max_steps, size=16, c=False):
     if compare:
@@ -115,13 +115,24 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_steps", type=int, default=400, help="How many steps in each episode"
     )
-    parser.add_argument("--fires", type=int, default=3, help="How many fires to start with")
-    parser.add_argument("--steps_incr", type=int, default=None, help="How many steps to increase the fire level by one")
+    parser.add_argument(
+        "--fires", type=int, default=3, help="How many fires to start with"
+    )
+    parser.add_argument(
+        "--steps_incr", type=int, default=None, help="How many steps to increase the fire level by one"
+    )
 
-    parser.add_argument("--n_agents", type=int, default=2, help="How many agents to run with")
-    parser.add_argument("--compare", default=False, action="store_true", help="Plot graphs to compare teams")
-    parser.add_argument("--seed", default=False, action="store_true", help="Use a seed for the environment")
-    parser.add_argument("--mode", type=int, default=0, help="How should agents behave:\n\t\
+    parser.add_argument(
+        "--n_agents", type=int, default=2, help="How many agents to run with"
+    )
+    parser.add_argument(
+        "--compare", default=False, action="store_true", help="Plot graphs to compare teams"
+    )
+    parser.add_argument(
+        "--seed", default=False, action="store_true", help="Use a seed for the environment"
+    )
+    parser.add_argument(
+        "--mode", type=int, default=0, help="How should agents behave:\n\t\
                         DEFAULT:\n\t\
                         0 - Randomly\n\t\
                         1 - Pseudo-randomly\n\t\
@@ -140,9 +151,9 @@ if __name__ == "__main__":
                         1 - Random vs Pseudo-random\n\t\
                         2 - Greedy Heuristics\n\t\
                         3 - Social Conventions\n\t\
-                        4 - Role Based"
-                        )
+                        4 - Role Based" )
 
     args = parser.parse_args()
-    main(args.times, args.render, args.fires, args.steps_incr, args.n_agents, args.compare, args.seed, args.mode, args.debug, args.max_steps)
+    main(args.times, args.render, args.fires, args.steps_incr, args.n_agents,
+         args.compare, args.seed, args.mode, args.debug, args.max_steps)
 

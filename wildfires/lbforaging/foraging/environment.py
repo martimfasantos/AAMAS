@@ -53,7 +53,7 @@ class Player:
         self.reward = 0
         self.history = None
         self.current_step = None
-        self.orietation = 0
+        self.orientation = 0
         self.direction = Action.NORTH
         self.extinguishing_mode = ExtinguishingMode.ANY
 
@@ -72,8 +72,8 @@ class Player:
         return self.controller.step(obs)
     
     def turn(self,angle):
-        self.orietation = (self.orietation + angle) % 360
-        self.direction = Action(self.orietation // 90)
+        self.orientation = (self.orientation + angle) % 360
+        self.direction = Action(self.orientation // 90)
 
     @property
     def name(self):
