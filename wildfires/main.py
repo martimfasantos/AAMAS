@@ -118,7 +118,7 @@ if __name__ == "__main__":
         "--max_steps", type=int, default=400, help="How many steps in each episode"
     )
     parser.add_argument(
-        "--fires", type=int, default=3, help="How many fires to start with"
+        "--fires", type=int, default=3, help="How many fires in the environment"
     )
     parser.add_argument(
         "--steps_incr", type=int, default=None, help="How many steps to increase the fire level by one"
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         "--seed", default=False, action="store_true", help="Use a seed for the environment"
     )
     parser.add_argument(
-        "--mode", type=int, default=0, help="How should agents behave:\n\t\
+        "--mode", type=int, default=None, help="How should agents behave:\n\t\
                         DEFAULT:\n\t\
                         0 - Randomly\n\t\
                         1 - Pseudo-randomly\n\t\
