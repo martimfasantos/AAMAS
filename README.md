@@ -1,6 +1,6 @@
 # AASMA's Project
 
-## Requirments
+## Requirements
 
 Run the following command to install the required packages:
 
@@ -35,8 +35,48 @@ Or you can run the project from the root directory by running the following comm
 python wildfires/main.py
 ```
 
-***Note:*** If you want a graphical interface, you should run the project with the --render flag.
-***Note:*** If you want to run it step by step (by pressing enter), you should run the project with the --debug flag.
+### Optional Arguments
+
+- `--render`: Enable rendering of the game (*default: False*)
+- `--debug`: Enable debug mode (*default: False*)
+- `--times TIMES`: How many times to run the game (*default: 1*)
+- `--max_steps MAX_STEPS`: How many steps in each episode (*default: 400*)
+- `--fires FIRES`: How many fires in the environment (*default: 3*)
+- `--steps_incr STEPS_INCR`: How many steps to increase the fire level by one (*default: None*)
+- `--n_agents N_AGENTS`: How many agents to run with (*default: 2*)
+- `--compare`: Plot graphs to compare teams (*default: False*)
+- `--seed`: Use a seed for the environment (*default: False*)
+- `--mode MODE`: Specify agent behavior mode:
+
+**Note**: Please keep in mind that the parameters *FIRES* and *N_AGENTS* are conditioned by the size of the environment. Using excessively large values for these parameters may result in issues or unexpected behavior.
+  
+### Mode Options
+
+| Modes                         |                         | Comparison Modes             |
+|-------------------------------|-------------------------|------------------------------|
+| 0: Randomly                   | 7: Social Conventions 1 | 1: Random vs Pseudo-random   |
+| 1: Pseudo-randomly            | 8: Social Conventions 2 | 2: Greedy Heuristics         |
+| 2: Greedy Heuristic 1         | 9: Social Conventions 3 | 3: Social Conventions        |
+| 3: Greedy Heuristic 2         | 10: Role Based 1        | 4: Role Based                |
+| 4: Greedy Heuristic 3         | 11: Role Based 2        |                              |
+| 5: Greedy Heuristic 4         | 12: Role Based 3        |                              |
+| 6: Greedy Heuristic 5         | 13: Defined teams       |                              |
+
+## Example
+
+To run the game with default settings:
+
+`python main.py`
+
+To run the game with custom settings:
+
+`python main.py --times 5 --max_steps 500 --fires 4 --n_agents 3 --compare --seed --mode 2 --render`
+
+Feel free to customize the parameters according to your specific needs.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ## Credits
 
