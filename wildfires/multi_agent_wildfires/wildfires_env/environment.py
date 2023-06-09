@@ -86,7 +86,7 @@ class Player:
             return "Player"
 
 
-class ForagingEnv(Env):
+class WildFireEnv(Env):
     """
     A class that contains rules/actions for the game level-based foraging.
     """

@@ -1,9 +1,8 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from lbforaging.agents import *
-from lbforaging.agents.role_agent import R3
-from lbforaging.agents.social_convention_agent import C4
+from multi_agent_wildfires.agents import *
+
 
 
 def generateTeams(mode, n_agents, compare=False):

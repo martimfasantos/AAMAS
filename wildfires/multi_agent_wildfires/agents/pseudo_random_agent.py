@@ -1,13 +1,14 @@
 import numpy as np
 
 from . import Agent
+from ..wildfires_env import Action
+
 
 class PseudoRandomAgent(Agent):
     name = "Pseudo  Random Agent"
 
     # agent that prefers to move instead of turning or doing nothing
     def step(self, obs):
-        from lbforaging.foraging.environment import Action
     
         weights = np.ones(len(obs.actions))
         for i, action in enumerate(obs.actions):

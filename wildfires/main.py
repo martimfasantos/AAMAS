@@ -8,7 +8,7 @@ import warnings
 from random import randint
 from gym.envs.registration import register
 from utils import *
-from lbforaging.foraging.environment import TILES_PER_FIRE
+from multi_agent_wildfires.wildfires_env import TILES_PER_FIRE
 
 
 SLEEP_TIME = 0.5
@@ -73,7 +73,7 @@ def main(game_count, render, fires, steps_incr, n_agents, compare, seed, mode, d
         
         register(
         id="Foraging-{0}x{0}-{1}p-{2}f{3}-v2".format(size, agents, TILES_PER_FIRE*fires, "-coop" if c else ""),
-        entry_point="lbforaging.foraging:ForagingEnv",
+        entry_point="multi_agent_wildfires.wildfires_env:WildFireEnv",
         kwargs={
             "players": agents,
             "field_size": (size, size),

@@ -10,7 +10,7 @@ import numpy as np
 import math
 import six
 from gym import error
-from .vehicle import FireTruck,Helicopter
+from . import FireTruck,Helicopter
 
 if "Apple" in sys.version:
     if "DYLD_FALLBACK_LIBRARY_PATH" in os.environ:

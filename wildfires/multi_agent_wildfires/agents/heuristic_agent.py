@@ -1,8 +1,8 @@
 import random
 import numpy as np
 from . import Agent
-from ..foraging.environment import Action, ExtinguishingMode
-from ..foraging import FireTruck
+from ..wildfires_env import Action, ExtinguishingMode
+from ..wildfires_env import FireTruck
 
 
 class HeuristicAgent(Agent):

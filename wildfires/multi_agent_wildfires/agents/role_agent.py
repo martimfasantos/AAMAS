@@ -1,6 +1,6 @@
 import numpy as np
-from .heuristic_agent import HeuristicAgent
-from ..foraging.environment import Action
+from . import HeuristicAgent
+from ..wildfires_env import Action
 
 ROLE_ASSIGNMENT_PERIOD = 3
 

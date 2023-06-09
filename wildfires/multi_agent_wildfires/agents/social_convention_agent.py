@@ -1,9 +1,9 @@
 import numpy as np
 from collections import namedtuple
 from . import Agent
-from ..foraging.environment import Action
-from ..foraging import FireTruck
-from .heuristic_agent import HeuristicAgent
+from ..wildfires_env import Action
+from ..wildfires_env import FireTruck
+from . import HeuristicAgent
 
 class ConventionAgent(HeuristicAgent):
     name = "Social Convention agent"
