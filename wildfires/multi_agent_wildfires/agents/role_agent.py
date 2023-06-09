@@ -138,7 +138,14 @@ class RoleAgent(HeuristicAgent):
             try:
                 assigned_fire = obs.fires[self.curr_role]
             except IndexError:
-                return Action.NONE
+                if(len(obs.fires) > 0):
+                    self.role_assignments = self.role_assignment(obs)
+                    self.curr_role = self.role_assignments[self.id]
+                    assigned_fire = obs.fires[self.curr_role]
+                else:
+                    return Action.NONE
+                       
+                   
 
         if assigned_fire == []:
             return Action.NONE
