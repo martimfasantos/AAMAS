@@ -22,7 +22,7 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [PseudoRandomAgent for _ in range(n_agents - n_agents // 2)]
                 }
             }
-        if mode == 1: # Greedy Comparison
+        elif mode == 1: # Greedy Comparison
             return {
                 "Greedy H1 Agents": {
                     "Helicopters": [H1 for _ in range(n_agents // 2)],
@@ -45,7 +45,7 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [H5 for _ in range(n_agents - n_agents // 2)]
                 }
             }
-        if mode == 2: # Social Conventions Comparison
+        elif mode == 2: # Social Conventions Comparison
             return {
                 "Convention C1 Agents": {
                     "Helicopters": [C1 for _ in range(n_agents // 2)],
@@ -64,7 +64,7 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [C4 for _ in range(n_agents // 2)]
                 }
             }
-        if mode == 3: # Role Based Comparison
+        elif mode == 3: # Role Based Comparison
             return {
                 "Role Based R1 Agents": {
                     "Helicopters": [R1 for _ in range(n_agents // 2)],
@@ -79,13 +79,13 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [R3 for _ in range(n_agents - n_agents // 2)]
                 }
             }
-        if mode == 4: # All Agents
+        elif mode == 4: # All Types of Agents (Random, Greedy, Social Conventions, Role Based)
             return {
                 "PseudoRandom Agents": {
                     "Helicopters": [PseudoRandomAgent for _ in range(n_agents // 2)],
                     "Firetrucks": [PseudoRandomAgent for _ in range(n_agents - n_agents // 2)]
                 },
-                "Greedy H3 Agents": {
+                "Greedy H1 Agents": {
                     "Helicopters": [H1 for _ in range(n_agents // 2)],
                     "Firetrucks": [H1 for _ in range(n_agents - n_agents // 2)]
                 },
@@ -93,9 +93,24 @@ def generateTeams(mode, n_agents, compare=False):
                     "Helicopters": [C3 for _ in range(n_agents // 2)],
                     "Firetrucks": [C3 for _ in range(n_agents - n_agents // 2)]
                 },
-                "Role Based Agents": {
-                    "Helicopters": [R1 for _ in range(n_agents // 2)],
-                    "Firetrucks": [R1 for _ in range(n_agents - n_agents // 2)]
+                "Role Based R2 Agents": {
+                    "Helicopters": [R2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R2 for _ in range(n_agents - n_agents // 2)]
+                }
+            }
+        elif mode == 5: # Best Agents (Greedy, Social Conventions, Role Based)
+            return {
+                "Greedy H1 Agents": {
+                    "Helicopters": [H1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [H1 for _ in range(n_agents - n_agents // 2)]
+                },
+                "Convention C3 Agents": {
+                    "Helicopters": [C3 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C3 for _ in range(n_agents - n_agents // 2)]
+                },
+                "Role Based R2 Agents": {
+                    "Helicopters": [R2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R2 for _ in range(n_agents - n_agents // 2)]
                 }
             }
         else:
@@ -104,15 +119,15 @@ def generateTeams(mode, n_agents, compare=False):
                     "Helicopters": [PseudoRandomAgent for _ in range(n_agents // 2)],
                     "Firetrucks": [PseudoRandomAgent for _ in range(n_agents - n_agents // 2)]
                 },
-                "Greedy H3 Agents": {
-                    "Helicopters": [H3 for _ in range(n_agents // 2)],
-                    "Firetrucks": [H3 for _ in range(n_agents - n_agents // 2)]
+                "Greedy H2 Agents": {
+                    "Helicopters": [H2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [H2 for _ in range(n_agents - n_agents // 2)]
                 },
-                "Convention C3 Agents": {
-                    "Helicopters": [C3 for _ in range(n_agents // 2)],
-                    "Firetrucks": [C3 for _ in range(n_agents - n_agents // 2)]
+                "Convention C2 Agents": {
+                    "Helicopters": [C2 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C2 for _ in range(n_agents - n_agents // 2)]
                 },
-                "Role Based Agents": {
+                "Role Based R1 Agents": {
                     "Helicopters": [R1 for _ in range(n_agents // 2)],
                     "Firetrucks": [R1 for _ in range(n_agents - n_agents // 2)]
                 }
@@ -232,7 +247,7 @@ def generateTeams(mode, n_agents, compare=False):
                     "Helicopters": [C3 for _ in range(n_agents // 2)],
                     "Firetrucks": [C3 for _ in range(n_agents - n_agents // 2)]
                 },
-                "Role Based Agents": {
+                "Role Based R1 Agents": {
                     "Helicopters": [R1 for _ in range(n_agents // 2)],
                     "Firetrucks": [R1 for _ in range(n_agents - n_agents // 2)]
                 }
