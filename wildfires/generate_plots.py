@@ -23,6 +23,11 @@ for m in mode:
                                     str(time), '--mode', str(m),
                                     '--fires', str(f),
                                     '--n_agents', str(n)]
+                        if m == 0:
+                            if time == 100: # Increase the number of steps
+                                commands.extend(['--max_steps', str(1000)])
+                            elif time == 500: # No need to run 500 times
+                                continue
                         if compare:
                             commands.append('--compare')
                         if s:
