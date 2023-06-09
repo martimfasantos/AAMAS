@@ -79,6 +79,25 @@ def generateTeams(mode, n_agents, compare=False):
                     "Firetrucks": [R3 for _ in range(n_agents - n_agents // 2)]
                 }
             }
+        if mode == 4: # All Agents
+            return {
+                "PseudoRandom Agents": {
+                    "Helicopters": [PseudoRandomAgent for _ in range(n_agents // 2)],
+                    "Firetrucks": [PseudoRandomAgent for _ in range(n_agents - n_agents // 2)]
+                },
+                "Greedy H3 Agents": {
+                    "Helicopters": [H1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [H1 for _ in range(n_agents - n_agents // 2)]
+                },
+                "Convention C3 Agents": {
+                    "Helicopters": [C3 for _ in range(n_agents // 2)],
+                    "Firetrucks": [C3 for _ in range(n_agents - n_agents // 2)]
+                },
+                "Role Based Agents": {
+                    "Helicopters": [R1 for _ in range(n_agents // 2)],
+                    "Firetrucks": [R1 for _ in range(n_agents - n_agents // 2)]
+                }
+            }
         else:
             return {
                 "PseudoRandom Agents": {
