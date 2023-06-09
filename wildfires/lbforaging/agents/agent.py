@@ -83,8 +83,10 @@ class Agent:
         def fire_fronts(field, y, x):
             possible_positions = [[y-1, x-1], [y-1, x], [y-1, x+1], [y, x-1], [y, x],
                                 [y, x+1], [y+1, x-1], [y+1, x], [y+1, x+1]] # Assuming 9 possible positions
-            active_fronts = [front for front in possible_positions if y >= 0 and y < field.shape[0] 
-                               and x >= 0 and x < field.shape[1] and field[front[0], front[1]] > 0]
+            active_fronts = [(front[0], front[1]) for front in possible_positions 
+                            if front[0] >= 0 and front[0] < field.shape[0] 
+                            and front[1] >= 0 and front[1] < field.shape[1] 
+                            and field[front[0], front[1]] > 0]
             return [coord[0] for coord in active_fronts], [coord[1] for coord in active_fronts]
 
         if start is None:

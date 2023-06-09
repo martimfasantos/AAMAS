@@ -129,7 +129,7 @@ class ForagingEnv(Env):
         
         self.max_fires = max_fires
         self.steps_incr = steps_incr
-        self.max_water_sources = 1 # TODO: make this a parameter
+        self.max_water_sources = self.max_fires // TILES_PER_FIRE // 2
         self._fires_spawned = 0.0
         self.max_player_level = MAX_PLAYER_LEVEL
         self.sight = sight
@@ -186,7 +186,7 @@ class ForagingEnv(Env):
             agents_max = np.ones(grid_shape, dtype=np.float32) * self.max_player_level
 
             # fires layer: fires level
-            max_fires_level = self.max_player_level * len(self.players)
+            max_fires_level = TILES_PER_FIRE * self.max_player_level * len(self.players)
             fires_min = np.zeros(grid_shape, dtype=np.float32)
             fires_max = np.ones(grid_shape, dtype=np.float32) * max_fires_level
 
@@ -377,9 +377,8 @@ class ForagingEnv(Env):
             fire_count += 1 + self._fill_adjacent_tiles(row, col, fire_level)
         self._fires_spawned = self.field.sum()
 
-    def spawn_water_sources(self, max_fires):
+    def spawn_water_sources(self, limit):
         water_sources = 0
-        limit = self.np_random.integers(1, max(max_fires // (2 * TILES_PER_FIRE), 2))
         attempts = 0
 
         while water_sources < limit and attempts < 1000:
@@ -479,7 +478,7 @@ class ForagingEnv(Env):
        return isinstance(player.controller, Helicopter) or \
                 isinstance(player.controller, FireTruck) and action == player.direction
     
-    
+
     def _is_valid_action(self, player, action):
         if action == Action.NONE:
             return True
@@ -694,8 +693,8 @@ class ForagingEnv(Env):
         self.spawn_fires(
             self.max_fires, max_level=MAX_FIRE_LEVEL
         )
+        self.spawn_water_sources(self.max_water_sources)
 
-        self.spawn_water_sources(self.max_fires)
         self.current_step = 0
         self._game_over = False
         self._gen_valid_moves()

@@ -98,7 +98,9 @@ def main(game_count, render, fires, steps_incr, n_agents, compare, seed, mode, d
         compare_results(
             results,
             title="Teams Comparison on 'Wildfires' Environment",
-            colors=["orange", "green", "blue", "gray"][:len(results)]
+            colors=["orange", "green", "blue", "gray"][:len(results)],
+            filename= (f"plots/mode={mode}_times={game_count}_fires={fires}"
+                       f"_agents={n_agents}_seed={seed}_steps_incr={steps_incr}.png")
         )
         
 
@@ -121,10 +123,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--steps_incr", type=int, default=None, help="How many steps to increase the fire level by one"
     )
-
     parser.add_argument(
         "--n_agents", type=int, default=2, help="How many agents to run with"
     )
+
     parser.add_argument(
         "--compare", default=False, action="store_true", help="Plot graphs to compare teams"
     )
