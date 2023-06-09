@@ -50,16 +50,16 @@ python wildfires/main.py
 
 **Note**: Please keep in mind that the parameters *FIRES* and *N_AGENTS* are conditioned by the size of the environment. Using excessively large values for these parameters may result in issues or unexpected behavior.
   
-### Mode Options
+## Mode Options
 
 | Modes                         |                         | Comparison Modes             |
 |-------------------------------|-------------------------|------------------------------|
-| 0: Randomly                   | 7: Social Conventions 1 | 1: Random vs Pseudo-random   |
-| 1: Pseudo-randomly            | 8: Social Conventions 2 | 2: Greedy Heuristics         |
-| 2: Greedy Heuristic 1         | 9: Social Conventions 3 | 3: Social Conventions        |
-| 3: Greedy Heuristic 2         | 10: Role Based 1        | 4: Role Based                |
-| 4: Greedy Heuristic 3         | 11: Role Based 2        |                              |
-| 5: Greedy Heuristic 4         | 12: Role Based 3        |                              |
+| 0: Randomly                   | 7: Social Conventions 1 | 0: Random vs Pseudo-random   |
+| 1: Pseudo-randomly            | 8: Social Conventions 2 | 1: Greedy Heuristics         |
+| 2: Greedy Heuristic 1         | 9: Social Conventions 3 | 2: Social Conventions        |
+| 3: Greedy Heuristic 2         | 10: Role Based 1        | 3: Role Based                |
+| 4: Greedy Heuristic 3         | 11: Role Based 2        | 4: All Better Agents         |
+| 5: Greedy Heuristic 4         | 12: Role Based 3        | 5: Only Best Agents          |
 | 6: Greedy Heuristic 5         | 13: Defined teams       |                              |
 
 ## Example
