@@ -1,4 +1,17 @@
-# AASMA's Project
+# Strategies for an Efficient Response to Wildfires
+
+This repository contains the project developed in the Autonomous Agents and Multi-Agent Systems masters course @ IST.
+
+
+Authors | Github
+--------|--------
+Martim Santos   | https://github.com/martimfasantos
+Marina Gomes    | https://github.com/marinagomes02
+Guilherme Gonçalves  | https://github.com/guilherme-goncalves793
+
+**Project Grade:** 19/20
+
+To acquire in-depth information regarding the project, please consult the [**report**](https://github.com/martimfasantos/AASMA/blob/main/AAMAS_Project_Report_2223.pdf).
 
 ## Requirements
 
